@@ -100,7 +100,7 @@ def isapicodaq(port: str) -> bool:
         return False
 
     
-def picodaqs() -> Dict[str, str]:
+def devices() -> Dict[str, str]:
     """Enumerate the PicoDAQs connected to the computer
 
     Returns
@@ -151,7 +151,7 @@ class PicoDAQ:
             # Any device
             if PicoDAQ._opendevs:
                 return PicoDAQ._opendevs[-1]
-            for port in picodaqs():
+            for port in devices():
                 return PicoDAQ(port)
             raise DeviceError("No picoDAQs found")
 

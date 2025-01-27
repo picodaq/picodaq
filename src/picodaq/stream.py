@@ -1,3 +1,4 @@
+from __future__ import annotations
 import numpy as np
 import logging
 
@@ -67,7 +68,7 @@ class Stream:
         stream must be individually opened and the device remains
         open as long as any streams are open.
         
-        Often, `with ... as` syntax is more convenient than calling
+        Often, ``with ... as`` syntax is more convenient than calling
         `open()` yourself. If you do call `open()` yourself, you must
         match it with `close()`.
         """
@@ -154,24 +155,28 @@ class Stream:
         """High-level method for reading data
 
         Parameters
-
-            amount - Amount of data to be read, either in units of time,
-                     or as an integer number of samples.
-
-            raw - Whether to return raw data from the device or convert
-                  them to more convenient units.
-
-            times - Whether to return a vector of time stamps
+        ----------
+        amount
+            Amount of data to be read, either in units of time,
+            or as an integer number of samples.
+        raw
+            Whether to return raw data from the device or convert
+            them to more convenient units.
+        times
+            Whether to return a vector of time stamps
 
         Returns
+        -------
+        data
+            A numpy array containing the data, either a vector
+            or a T×C array.
+        times:
+            A corresponding vector of time stamps, in seconds
+            since start of run; only if the `times` flag is set
+            in the function call.
 
-            data - A numpy array containing the data, either a vector
-                   or a T×C array.
-
-            times - A corresponding vector of time stamps, in seconds
-                    since start of run; only if the `times` flag is set
-                    in the function call.
-
+        Notes
+        -----
         If no `amount` is specified at all, a single chunk is read in
         continuous mode, or a full episode in episodic mode.
 

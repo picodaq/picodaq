@@ -1,3 +1,4 @@
+from __future__ import annotations
 import numpy as np
 import logging
 from numpy.typing import ArrayLike
@@ -13,14 +14,14 @@ log = logging.getLogger(__name__)
 
 
 class AnalogIn(Stream):
-    """Main interface for acquiring analog data.
+    """Main interface for acquiring analog data
 
     Parameters:
 
-        channel - A single channel to record from
-        channels - A list of channels to record from
-        rate - Sampling frequency for the recording
-        port - Device to connect to
+        channel: A single channel to record from
+        channels: A list of channels to record from
+        rate: Sampling frequency for the recording
+        port: Device to connect to
 
     You must specify either a single `channel` or a list of `channels`
     to record from, but not both. Any combination of analog inputs 0,
@@ -32,8 +33,8 @@ class AnalogIn(Stream):
     streams, the rates must all be the same and only need to be
     specified on the first-opened stream.
 
-    The `port` specifies which serial port to open. The
-    `picodaq.devicelist()` function retrieves the list of available
+    The `port` specifies which serial port to open. Use
+    ``picodaq.devices()`` to retrieve the list of available
     ports.
 
     If you do not specify a port, the most recently opened device is
@@ -87,7 +88,7 @@ class AnalogIn(Stream):
 
         Parameters:
 
-            force - Re-verify unconditionally
+            force: Re-verify unconditionally
 
         You typically don't have to call this, as `start()` and
         `read()` call it for you if you don't. To reduce the latency
@@ -201,10 +202,10 @@ class AnalogIn(Stream):
             
         
 class DigitalIn(Stream):
-    """Main interface for acquiring digital data.
+    """Main interface for acquiring digital data
 
-    You must specify either a single `line` to record from or a list
-    of `lines`. Unlike for AnalogIn, there are some restrictions on
+    You must specify either a single `line` or a list
+    of `lines` to record from. There are some restrictions on
     the selection. The lines must be consecutive and specified in
     order. The total number of lines must be 1, 2, or 4 (i.e., not 3).
 

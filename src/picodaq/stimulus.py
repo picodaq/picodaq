@@ -152,7 +152,7 @@ class TTL(Pulse):
 class Square(Pulse):
     """Representation of a square wave (biphasic pulse)
 
-    Parameters
+    Parameters:
 
         amplitude -  The amplitude of the first phase of the wave
                      (relative to baseline), in units of voltage.
@@ -198,7 +198,7 @@ class Square(Pulse):
 class Sawtooth(Pulse):
     """Representation of a sawtooth wave
 
-    Parameters
+    Parameters:
 
         start - Voltage at start of the waveform, relative
                 to baseline
@@ -226,7 +226,7 @@ class Sawtooth(Pulse):
 class Triangle(Pulse):
     """Representation of a triangle wave
 
-    Parameters
+    Parameters:
 
         amplitude - The amplitude of the first phase of the wave
                      (relative to baseline), in units of voltage.
@@ -276,7 +276,7 @@ class Triangle(Pulse):
 class Wave(Pulse):
     """Representation of an arbitrary wave stimulus
 
-    Parameters
+    Parameters:
 
         data - A vector in which every value represents a single
                sample.
@@ -306,7 +306,7 @@ class Wave(Pulse):
 class Train:
     """Representation of a train of pulses
 
-    Parameters
+    Parameters:
 
         pulse - The waveform to be used in the train.
 
@@ -396,7 +396,7 @@ class Train:
     def duration(self, tight: bool = False) -> Time:
         """The duration of the train
 
-        Parameters
+        Parameters:
 
             tight - If true, the duration is measured to the end of the
                     final pulse. Otherwise, it includes the (fictive)
@@ -438,7 +438,7 @@ class Train:
 class Series:
     """Representation of a series of trains
 
-    Parameters
+    Parameters:
 
         train - The constituent train of the series.
 
@@ -542,7 +542,7 @@ class Series:
 class Parametrized:
     """Define a parametrized stimulation sequence for a single output
 
-    Parameters
+    Parameters:
 
         stim - a Series, a Train, or a single Pulse.
 
@@ -585,7 +585,7 @@ class Parametrized:
 class Sampled:
     """Define raw data to be sent to a single output channel
 
-    Parameters
+    Parameters:
 
         data - output data for the channel
         scale - scale factor to apply to the data
@@ -619,3 +619,8 @@ class Sampled:
             if self.scale.as_("V") != 1 or self.offset.as_("V") != 0:
                 raise ValueError("Raw data cannot be scaled or offset")
     
+__all__ = ["Pulse", "Square", "Sawtooth", "Triangle", "Wave",
+           "TTL",
+           "Train", "Series",
+           "Deltas"
+           ]
