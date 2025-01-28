@@ -60,7 +60,7 @@ class Stream:
         self.open()
         return self
 
-    def open(self):
+    def open(self) -> None:
         """Open the stream
 
         This automatically opens the underlying PicoDAQ device. If
@@ -81,7 +81,7 @@ class Stream:
     def __exit__(self, *args):
         self.close()
 
-    def close(self):
+    def close(self) -> None:
         """Close the stream
 
         The underlying device is automatically closed once the last
@@ -154,29 +154,21 @@ class Stream:
              times: bool = False) -> np.ndarray:
         """High-level method for reading data
 
-        Parameters
-        ----------
-        amount
-            Amount of data to be read, either in units of time,
-            or as an integer number of samples.
-        raw
-            Whether to return raw data from the device or convert
-            them to more convenient units.
-        times
-            Whether to return a vector of time stamps
+        Parameters:
+            amount: Amount of data to be read, either in units of time,
+                or as an integer number of samples.
+            raw: Whether to return raw data from the device or convert
+                them to more convenient units.
+            times: Whether to return a vector of time stamps
 
-        Returns
-        -------
-        data
-            A numpy array containing the data, either a vector
-            or a T×C array.
-        times:
-            A corresponding vector of time stamps, in seconds
-            since start of run; only if the `times` flag is set
-            in the function call.
+        Returns:
+            data — A numpy array containing the data, either a vector
+                or a T×C array.
+            times — A corresponding vector of time stamps, in seconds
+                since start of run; only if the `times` flag is set
+                in the function call.
 
-        Notes
-        -----
+
         If no `amount` is specified at all, a single chunk is read in
         continuous mode, or a full episode in episodic mode.
 

@@ -17,7 +17,7 @@
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 
-
+from __future__ import annotations
 import re
 import numpy as np
 from numpy.typing import ArrayLike
@@ -240,8 +240,7 @@ class Quantity:
     
           (Quantity("10 kHz") * Quantity("10 ms")).plain() # -> 100
 
-    Technical details
-    =================
+    **Technical details**
     
     The full syntax for unit specification is:
 
@@ -462,9 +461,11 @@ class Quantity:
         return qty
 
     def __str__(self):
+        """"""
         return self.definition()
 
     def __repr__(self):
+        """"""
         return f'Quantity("{self.definition()}")'
 
     def plain(self, warn: bool = False) -> float | np.ndarray:

@@ -83,12 +83,14 @@ class AnalogIn(Stream):
         super().close()
         self.dev.setaichannels([])
 
-    def verify(self, force=False):
+    def verify(self, force=False) -> bool:
         """Confirm whether recording parameters are OK
 
         Parameters:
-
             force: Re-verify unconditionally
+
+        Returns:
+            True if OK, else false.
 
         You typically don't have to call this, as `start()` and
         `read()` call it for you if you don't. To reduce the latency
@@ -103,8 +105,16 @@ class AnalogIn(Stream):
         """
         self.dev.verify(force)
 
-    def readchunk(self, maxn=None) -> np.ndarray:
+    def readchunk(self, _maxn=None) -> np.ndarray:
         """Read a single chunk
+
+        Parameters:
+           _maxn: Maximum number of scans to read. The use of this parameter
+                  is not recommended.
+
+        Returns:
+            A numpy array containing the data
+        
 
         The shape of the result depends on whether the `channel` or
         `channels` parameter was used at construction time. If
@@ -112,7 +122,7 @@ class AnalogIn(Stream):
         number of samples read. Otherwise, the result is a T×C array,
         even if only one channel is in use.
 
-        Typically, `read()` is more convenient.
+        Almost always, `read()` is more convenient in user code.
 
         """
         if not self.dev.reader:
@@ -121,7 +131,7 @@ class AnalogIn(Stream):
             self.dev.reader.read()
         if not self.dev.reader.hasadata():
             return None
-        data = self.dev.reader.fetchadata(maxn)
+        data = self.dev.reader.fetchadata(_maxn)
         if debug:
             log.debug(f"readchunk {data.shape}")
         if self.asvector:
@@ -159,13 +169,35 @@ class AnalogIn(Stream):
              times: bool = False) -> np.ndarray:
         """Read all data accumulated during run().
 
+        Parameters:
+            raw: Whether to return raw data from the device or convert
+                 them to more convenient units.
+            times: Whether to return a vector of time stamps.
+
+        Returns:
+           data — A numpy array containing the data.
+        
+           times — A corresponding vector of time stamps, in seconds
+                  since start of run; only if the `times` flag is set
+                  in the function call.
+
+
         Used after calling run() on AnalogOut or DigitalOut to
         retrieve all the data recorded during the run. In continuous
         mode, returns a T-vector or T×C array. In episodic mode,
         returns an N×L or N×L×C array, where N is the number of
         episodes and L is the number of scans per episode.
 
-        The meaning of `raw` and `times` is as for `read()`.
+        Example of reading just the data::
+
+            data = ai.readall()
+
+        Example of reading timestamps along with the data::
+
+            data, times = ai.readall(times=True)
+
+        The returned times are always a simple vector which applies
+        equally to all channels (and to all episodes).
 
         """
         if not self.dev.reader:
@@ -213,8 +245,8 @@ class DigitalIn(Stream):
     streams, the rates must all be the same and only need to be
     specified on the first-opened stream.
 
-    The `port` specifies which serial port to open. The
-    `picodaq.devicelist()` function retrieves the list of available
+    The `port` specifies which serial port to open. Use
+    ``picodaq.devices()`` to retrieve the list of available
     ports.
 
     If you do not specify a port, the most recently opened device
@@ -263,13 +295,19 @@ class DigitalIn(Stream):
     def verify(self, force=False):
         self.dev.verify(force)
 
-    def readchunk(self, maxn=None) -> np.ndarray:
+    def readchunk(self, _maxn=None) -> np.ndarray:
         """Read a single chunk of data
 
-        The output is always a vector of bytes comprising interleaved
-        data.
+        Parameters:
+            _maxn: Maximum number of scans to read. The use of this
+                parameter is not recommended.
+
+        Returns:
+            A numpy array containing the data
+
+        The result is always a vector of interleaved bytes.
         
-        Typically, `read()` is more convenient.
+        Almost always, `read()` is more convenient in user code.
 
         """
         if not self.dev.reader:
@@ -278,7 +316,7 @@ class DigitalIn(Stream):
             self.dev.reader.read()
         if not self.dev.reader.hasddata():
             return None
-        data = self.dev.reader.fetchddata(maxn)
+        data = self.dev.reader.fetchddata(_maxn)
         return data
 
     @with_doc(Stream.read)
@@ -316,13 +354,36 @@ class DigitalIn(Stream):
     def readall(self, raw: bool = False, times: bool = False) -> np.ndarray:
         """Read all data accumulated during run().
 
+        Parameters:
+            raw: Whether to return raw data from the device or convert
+                 them to more convenient units.
+            times: Whether to return a vector of time stamps.
+
+        Returns:
+           data — A numpy array containing the data.
+        
+           times — A corresponding vector of time stamps, in seconds
+                  since start of run; only if the `times` flag is set
+                  in the function call.
+
+
         Used after calling run() on AnalogOut or DigitalOut to
         retrieve all the data recorded during the run. In continuous
         mode, returns a T-vector or T×C array. In episodic mode,
         returns an N×L or N×L×C array, where N is the number of
         episodes and L is the number of scans per episode.
 
-        The meaning of `raw` is as for `read()`.
+
+        Example of reading just the data::
+
+            data = di.readall()
+
+        Example of reading timestamps along with the data::
+
+            data, times = di.readall(times=True)
+
+        The returned times are always a simple vector which applies
+        equally to all lines (and to all episodes).
 
         """
         if not self.dev.reader:

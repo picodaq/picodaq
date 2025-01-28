@@ -1,3 +1,4 @@
+from __future__ import annotations
 import numpy as np
 from numpy.typing import ArrayLike
 from typing import Optional, Callable
@@ -17,32 +18,32 @@ class Deltas:
     
     Parameters:
     
-        amplitude - additive change to the `amplitude` parameter of
+        amplitude: additive change to the `amplitude` parameter of
                     `Pulse`, `Square`, or `Triangle` shapes
 
-        amplitude2 - additive change to the `amplitude2` parameter of
+        amplitude2: additive change to the `amplitude2` parameter of
                      `Square` or `Triangle` shapes
     
-        duration - additive change to the `duration` parameter of any shape
+        duration: additive change to the `duration` parameter of any shape
 
-        duration2 - additive change to the `duration2` parameter of
+        duration2: additive change to the `duration2` parameter of
                      `Square` or `Triangle` shapes
     
-        start - additive change to the `start` parameter of the
+        start: additive change to the `start` parameter of the
                 `Sawtooth` shape
 
-        end - additive change to the `end` parameter of the
+        end: additive change to the `end` parameter of the
               `Sawtooth` shape
 
-        scale - additive change to the `scale` parameter of the
+        scale: additive change to the `scale` parameter of the
                 `Wave` shape
 
-        pulsecount - additive change to the number of pulses in a train
+        pulsecount: additive change to the number of pulses in a train
 
-        pulseperiod - additive change to the period between pulses in
+        pulseperiod: additive change to the period between pulses in
                       a train
 
-        trainperiod - additive change to the period between trains in
+        trainperiod: additive change to the period between trains in
                       a series
 
     (There is no `traincount` parameter that would modify the number
@@ -82,16 +83,16 @@ class Pulse:
 
     Parameters:
 
-        amplitude - The amplitude of the pulse (relative to baseline),
-                    in units of voltage. The amplitude may be negative.
+        amplitude: The amplitude of the pulse (relative to baseline),
+                   in units of voltage. The amplitude may be negative.
 
-        duration - The duration of the pulse, in units of time.
+        duration: The duration of the pulse, in units of time.
 
     """
     
     def __init__(self,
-                 amplitude: Voltage = 0*V,
-                 duration: Time = 0*s):
+                 amplitude: Voltage,
+                 duration: Time):
         super().__init__()
         self.amplitude1 = amplitude
         self.duration1 = duration
@@ -124,9 +125,9 @@ class TTL(Pulse):
 
     Parameters:
 
-        duration - The duration of the pulse, in units of time.
+        duration: The duration of the pulse, in units of time.
 
-        active_low - If true, the polarity of the entire stimulus
+        active_low: If true, the polarity of the entire stimulus
                      is inverted, that is, the line is high outside
                      the pulse and low inside.
 
@@ -139,9 +140,8 @@ class TTL(Pulse):
     def __init__(self,
                  duration: Time,
                  active_low: bool = False):
-        super().__init__()
+        super().__init__(0*V, duration)
         self.amplitude1 = active_low
-        self.duration1 = duration
         self.name = "ttl"
         
     def apply(self, delta: Deltas):
@@ -154,18 +154,18 @@ class Square(Pulse):
 
     Parameters:
 
-        amplitude -  The amplitude of the first phase of the wave
+        amplitude: The amplitude of the first phase of the wave
                      (relative to baseline), in units of voltage.
                      The amplitude may be negative.
 
-        duration - The duration of the first phase of the wave, in
+        duration: The duration of the first phase of the wave, in
                    units of time.
 
-        amplitude2 - The amplitude of the second phase of the wave.
+        amplitude2: The amplitude of the second phase of the wave.
                      If omitted, defaults to the opposite of the
                      polarity of the first phase.
 
-        duration2 - The duration of the second phase of the wave. If
+        duration2: The duration of the second phase of the wave. If
                     omitted, defaults to the duration of the first phase.
 
     The full duration of the waveform is the sum of the duration of the
@@ -181,9 +181,7 @@ class Square(Pulse):
                  duration: Time,
                  amplitude2: Voltage | None = None,
                  duration2: Time | None = None):
-        super().__init__()
-        self.amplitude1 = amplitude
-        self.duration1 = duration
+        super().__init__(amplitude, duration)
         if amplitude2 is None:
             self.amplitude2 = -amplitude
         else:
@@ -200,12 +198,12 @@ class Sawtooth(Pulse):
 
     Parameters:
 
-        start - Voltage at start of the waveform, relative
+        start: Voltage at start of the waveform, relative
                 to baseline
 
-        end - Voltage at end of the waveform, ditto
+        end: Voltage at end of the waveform, ditto
 
-        duration - The duration of the ramp, in units of time.
+        duration: The duration of the ramp, in units of time.
 
     For a traditional function-generator sawtooth with peak-to-peak
     amplitude A and frequency F, set start = -A/2, end = +A/2,
@@ -216,10 +214,8 @@ class Sawtooth(Pulse):
                  end: Voltage,
                  duration: Time):
         
-        super().__init__()
-        self.amplitude1 = start
+        super().__init__(start, duration)
         self.amplitude2 = end
-        self.duration1 = duration
         self.name = "saw"
         
         
@@ -228,18 +224,18 @@ class Triangle(Pulse):
 
     Parameters:
 
-        amplitude - The amplitude of the first phase of the wave
+        amplitude: The amplitude of the first phase of the wave
                      (relative to baseline), in units of voltage.
                      The amplitude may be negative.
 
-        duration - The duration of the first phase of the wave, in
+        duration: The duration of the first phase of the wave, in
                    units of time.
 
-        amplitude2 - The amplitude of the second phase of the wave.
+        amplitude2: The amplitude of the second phase of the wave.
                      If omitted, defaults to the opposite of the
                      polarity of the first phase.
 
-        duration2 - The duration of the second phase of the wave.
+        duration: The duration of the second phase of the wave.
 
     To create a traditional function-generator triangle wave with
     peak-to-peak amplitude A and frequency F, set amplitude = A/2
@@ -258,9 +254,7 @@ class Triangle(Pulse):
                  duration: Time,
                  amplitude2: Voltage | None = None,
                  duration2: Time | None = None):
-        super().__init__()
-        self.amplitude1 = amplitude
-        self.duration1 = duration
+        super().__init__(amplitude, duration)
         if amplitude2 is None:
             self.amplitude2 = -amplitude
         else:
@@ -278,10 +272,10 @@ class Wave(Pulse):
 
     Parameters:
 
-        data - A vector in which every value represents a single
+        data: A vector in which every value represents a single
                sample.
 
-        scale - Scale factor applied to the data, in units of
+        scale: Scale factor applied to the data, in units of
                 voltage.
 
     For instance, to create a sine wave with 1 Vpp amplitude,
@@ -291,9 +285,8 @@ class Wave(Pulse):
     
     def __init__(self, data: ArrayLike, scale: Voltage = 1*V,
                  rate: Frequency | None = None):
-        super().__init__()
+        super().__init__(scale, 0*s)
         self.data = data
-        self.amplitude1 = scale
         self.name = "wave"
 
     def Vmax(self) -> Voltage:
@@ -308,23 +301,23 @@ class Train:
 
     Parameters:
 
-        pulse - The waveform to be used in the train.
+        pulse: The waveform to be used in the train.
 
-        pulsecount - The number of pulses in the train.
+        pulsecount: The number of pulses in the train.
 
-        duration - The total duration of the train.
+        duration: The total duration of the train.
 
-        pulseperiod - The period between consecutive pulses.
+        pulseperiod: The period between consecutive pulses.
 
-        perpulse - Changes to apply to parameters between pulses
+        perpulse: Changes to apply to parameters between pulses
 
     For analog outputs, the `pulse` may be any of Pulse, Square,
-    Sawtooth, triangle, or Wave; for digital outputs, it may only
+    Sawtooth, Triangle, or Wave; for digital outputs, it may only
     be TTL.
 
     Either the number of pulses must be specified (with `pulsecount`),
     or the total duration of the train (with `duration`), but not
-    both. If duration is given, the pulse count is calculated for a
+    both. If `duration` is given, the pulse count is calculated for a
     tight fit. For instance, if the pulse period is 100 ms and each
     pulse has a duration of 20 ms, then specifying duration as 420 ms
     will yield 5 pulses.
@@ -398,7 +391,7 @@ class Train:
 
         Parameters:
 
-            tight - If true, the duration is measured to the end of the
+            tight: If true, the duration is measured to the end of the
                     final pulse. Otherwise, it includes the (fictive)
                     interval after the final pulse.
         """
@@ -440,15 +433,15 @@ class Series:
 
     Parameters:
 
-        train - The constituent train of the series.
+        train: The constituent train of the series.
 
-        traincount - The number of trains in the series.
+        traincount: The number of trains in the series.
 
-        duration - The total duration of the series.
+        duration: The total duration of the series.
 
-        trainperiod - The period between consecutive trains.
+        trainperiod: The period between consecutive trains.
 
-        pertrains - Changes to apply to parameters between trains.
+        pertrains: Changes to apply to parameters between trains.
 
     Either the number of trains much be specified (with `traincount`),
     or the total duration of the series (with `duration`), but not
@@ -544,13 +537,13 @@ class Parametrized:
 
     Parameters:
 
-        stim - a Series, a Train, or a single Pulse.
+        stim: a Series, a Train, or a single Pulse.
 
-        delay - delay to first pulse
+        delay: delay to first pulse
 
-        repeat - repeat period for the stimulus or None
+        repeat: repeat period for the stimulus or None
 
-        offset - offset voltage for the channel
+        offset: offset voltage for the channel
 
 
     The delay is measured from the start of the recording to the
@@ -587,10 +580,10 @@ class Sampled:
 
     Parameters:
 
-        data - output data for the channel
-        scale - scale factor to apply to the data
-        offset - offset to be added after scaling
-        raw - data represent raw binary values
+        data: output data for the channel
+        scale: scale factor to apply to the data
+        offset: offset to be added after scaling
+        raw: data represent raw binary values
 
     You may either specify prepared data as an array (T-vector) or
     specify a callable the generates the data on the fly and that
@@ -603,9 +596,9 @@ class Sampled:
     you may specify data as raw binary values (16-bit signed
     integers). In that case, scale and offset may not be specified.
 
-    If digital data are represented as a Sampled, nonzero values map
-    to digital 1 and zero values to digital 0. In this case, neither
-    the `offset` nor the `raw` flag has meaning.
+    When digital data are represented as a Sampled, nonzero values map
+    to digital 1 and zero values to digital 0. In this case, the
+    `scale`, `offset`, and `raw` parameters are ignored.
 
     """
     def __init__(self, data: ArrayLike | Callable,

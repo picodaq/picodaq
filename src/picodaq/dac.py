@@ -1,3 +1,4 @@
+from __future__ import annotations
 import numpy as np
 from numpy.typing import ArrayLike
 from typing import Optional, Callable, Iterable
@@ -73,20 +74,19 @@ class OutRef:
 
         
 class AnalogOut(Stream):
-    """Main interface for stimulating through analog channels.
+    """Main interface for stimulating through analog channels
 
-    Parameters
-
-        rate - Sampling frequency for output
-        port - Serial port to open
-        maxahead - Max. number of samples to preload
+    Parameters:
+        rate: Sampling frequency for output
+        port: Serial port to open
+        maxahead: Max. number of samples to preload
 
     The `rate` may be specified in Hz or kHz. When using multiple
     streams, the rates must all be the same and only need to be
     specified on the first-opened stream.
 
-    The `port` specifies which serial port to open. The
-    `picodaq.devicelist()` function retrieves the list of available
+    The `port` specifies which serial port to open. Use
+    ``picodaq.devices()`` to retrieve the list of available
     ports.  If you do not specify a port, the most recently opened
     device is used, or the first device on the system if none was
     opened before.
@@ -252,11 +252,10 @@ class AnalogOut(Stream):
         precisely.
 
         If you make any changes to stimulation parameters, you will
-        have to re-commit. Most of the time, the system understands
-        that and will do it for you. There is currently one mild
-        exception: If you commit with sampled output defined (see
-        `sampled`), and then switch an associated input stream
-        between episodic and continuous, 
+        have to re-commit. The system understands that and will do it
+        for you upon `start()` or `run()`. However, relying on this
+        behavior is not recommended, if only because it negates any
+        timing advantage of calling `commit()` ahead of time.
 
         """
         if not self.isopen:
@@ -326,7 +325,7 @@ class AnalogOut(Stream):
         if not wasopen:
             self.close()
 
-    def poll(self):
+    def poll(self) -> bool:
         """Send some data, if space available in buffer
 
         Returns:
@@ -345,8 +344,8 @@ class DigitalOut(Stream):
     streams, the rates must all be the same and only need to be
     specified on the first-opened stream.
 
-    The `port` specifies which serial port to open. The
-    `picodaq.devicelist()` function retrieves the list of available
+    The `port` specifies which serial port to open. Use
+    ``picodaq.devices()`` to retrieve the list of available
     ports.
 
     If you do not specify a port, the most recently opened device is
