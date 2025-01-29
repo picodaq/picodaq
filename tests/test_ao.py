@@ -17,7 +17,7 @@ class TestAO(unittest.TestCase):
         series1 = stimulus.Series(train1, 3, trainperiod=100*ms)
         ao = AnalogOut(rate=10*kHz)
         ao.open()
-        ao[2].stimulus(series1)
+        ao[0].stimulus(series1)
         t0 = time.time()
         ao.run()
         dt1 = time.time() - t0

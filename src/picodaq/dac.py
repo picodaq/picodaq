@@ -496,9 +496,12 @@ class DigitalOut(Stream):
         samplines = []
         for line in range(4):
             if line in self.stimuli:
-                self._configstim(line, self.stimuli[line])
-            elif isinstance(self.stimuli[line], Sampled):
-                samplines.append(line)
+                if isinstance(self.stimuli[line], Parametrized):
+                    self._configstim(line, self.stimuli[line])
+                elif isinstance(self.stimuli[line], Sampled):
+                    samplines.append(line)
+                else:
+                    raise ValueError("Confusion about stimulus")
             elif line >= firstline and line <= lastline:
                 self._confignostim(line)
             else:
