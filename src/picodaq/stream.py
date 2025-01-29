@@ -131,10 +131,13 @@ class Stream:
     def readchunk(self):
         raise ValueError("Stream does not support reading")
 
-    def chunkscans(self, maxn=None):
+    def chunkscans(self) -> int:
         """Quantum of data transfer
 
-        This returns the number of scans that would be returned by the
+        Returns:
+            The number of scans in a standard chunk
+
+        This is the number of scans that would be returned by the
         low-level `readchunk()` method. The high-level `read()` method
         is most efficient if requested quantities are an integer
         multiple of this number.

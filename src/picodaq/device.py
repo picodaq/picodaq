@@ -209,20 +209,28 @@ class PicoDAQ:
                  count: int | None = None) -> None:
         """Select episodic recording mode.
 
-        Duration and period may be specified in any unit of time.
+        Parameters:
+            duration: Duration of each episode
+            period: start-to-start time between episodes
+            count: number of episodes before automatically stopping
+
         The period is measured start-to-start and is optional if
         triggering is enabled, in which cases it specifies the
         minimum period.
 
         Count, if given, specifies that the recording will stop
         automatically after that number of episodes have been
-        recorded. Otherwise, it continuous until the user stops the
+        recorded. Otherwise, it continues until the user stops the
         recording.
+
+        The duration of each episode may be lengthened slightly so
+        that it constitutes an even number of USB transfer chunks.
 
         In episodic mode, the timing of any stimuli is modified such
         that there is one train per episode and the defined
-        inter-train intervals are ignored. The `delay` parameter sets
-        the time between start of episode and first pulse.
+        inter-train intervals are ignored. The `delay` parameter on
+        the stimulus sets the time between start of episode and
+        first pulse.
 
         See also `continuous`.
 
@@ -237,7 +245,10 @@ class PicoDAQ:
     def continuous(self) -> None:
         """Select continuous recording mode.
 
-        This is the default. See also `episodic`.
+        This cancels a previous call to `episodic`, which see.  You
+        normally do not need to call this, as continuous recording is
+        the default.
+
         """
         self.epi_dur = None
         self.epi_per = None
@@ -248,6 +259,10 @@ class PicoDAQ:
 
     def trigger(self, source: int, polarity: int) -> None:
         """Define triggering.
+
+        Parameters:
+            source: the digital line to monitor
+            polarity: edge on which to trigger
 
         The recording (whether continuous or episodic) is not actually
         started until the given trigger condition is met. `Source` (0,
@@ -270,10 +285,10 @@ class PicoDAQ:
     def immediate(self) -> None:
         """Disable triggering.
 
-        Recording commences immediately upon `start`. This is the
-        default.
-
-        See also `trigger`.
+        This cancels a preceding call to `trigger` (which see), so
+        recording commences immediately upon `start`. You normally do
+        not have to call this, as immediate start is the default
+        operation.
 
         """
         self.trg_source = None
@@ -392,7 +407,10 @@ class PicoDAQ:
             self.nscans = self.params["nscans"] # get updated value from device
             nchunks = (scansperepi + self.nscans - 1) // nscans
             self.command(f"nchunks {nchunks}")
-            self.command(f"period {int(self.epi_per.as_('ms') + 0.5)}")
+            if self.epi_per is None:
+                self.command("period 0")
+            else:
+                self.command(f"period {int(self.epi_per.as_('ms') + 0.5)}")
             if self.epi_count is None:
                 self.command(f"nepis 0")
             else:
