@@ -11,6 +11,10 @@ sys.path.append("../software")
 from picodaq import stimulus, V, ms, kHz, AnalogOut, AnalogIn, mockstim
 
 
+import logging
+#logging.basicConfig(level=logging.DEBUG)
+
+
 assertdata = False
 plot = False
 

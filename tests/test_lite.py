@@ -8,7 +8,7 @@ import pytest
 
 sys.path.append("../software")
 
-from picodaq import stimulus, V, ms, kHz, AnalogOut, AnalogIn, mockstim
+from picodaq import stimulus, V, ms, kHz, AnalogOut, AnalogIn, mockstim, DigitalOut
 
 assertdata = False
 plot = False
@@ -31,6 +31,23 @@ def assertVecApprox(vv, vvtgt, absdelta=.1, tdelta=2):
     assert np.max(dv) < absdelta
 
 
+def test_sine():
+    wave = np.sin(np.arange(10000)*2*np.pi/1000)*9.99
+    with AnalogOut(rate=10*kHz) as ao:
+        with AnalogIn(channel=0) as ai:
+            ao[0].sampled(wave, 1*V)
+            t0 = time.time()
+            ao.run()
+            dt1 = time.time() - t0
+            data = ai.readall()
+            mockdata = mockstim.mock(ao[0], len(data) / (10*kHz))
+            dt2 = time.time() - t0
+    if plot:
+        plt.figure()
+        plt.title("test_sine")
+        plt.plot(mockdata)
+        plt.plot(data)
+
     
 def test_sawtooth():
     pulse1 = stimulus.Sawtooth(-3*V, 3*V, 80*ms)
@@ -38,6 +55,7 @@ def test_sawtooth():
     with AnalogOut(rate=10*kHz) as ao:
         with AnalogIn(channel=0) as ai:
             ao[0].stimulus(train1)
+            ao[1].stimulus(train1)
             t0 = time.time()
             ao.run()
             dt1 = time.time() - t0
@@ -61,6 +79,28 @@ def test_sawtooth():
         assertVecApprox(data, mockdata)
 
 
+
+    
+def test_ttl():
+    pulse1 = stimulus.TTL(30*ms)
+    train1 = stimulus.Train(pulse1, 5, pulseperiod=100*ms)
+    with DigitalOut(rate=10*kHz) as do:
+        with AnalogIn(channel=0) as ai:
+            do[0].stimulus(train1)
+            do[1].stimulus(train1)
+            t0 = time.time()
+            do.run()
+            dt1 = time.time() - t0
+            data = ai.readall()
+            mockdata = mockstim.mock(do[0], len(data) / (10*kHz))
+            dt2 = time.time() - t0
+
+    if plot:
+        plt.figure()
+        plt.title("test_ttl")
+        plt.plot(mockdata)
+        plt.plot(data)
+        
 if __name__ == "__main__":
     print("""Make sure there is a BNC cable between AO0 and AI0
     before running this test""")

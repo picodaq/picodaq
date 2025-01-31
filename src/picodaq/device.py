@@ -327,7 +327,7 @@ class PicoDAQ:
         self.command("start")
         if not self.verify():
             log.error("Unsupported parameters:")
-            for k, v in self.params:
+            for k, v in self.params.items():
                 log.error(f"  {k}: {v}")
             raise DeviceError("Unsupported parameters")
         self.reader = BinaryReader(self)

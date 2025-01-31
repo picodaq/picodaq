@@ -17,6 +17,15 @@ plot = False
 def assertApprox(V, Vtarget):
     assert abs(V - Vtarget) < 0.1
 
+def assertVecApprox(vv, vvtgt, absdelta=.1, tdelta=2):
+    dv = []
+    T = len(vv)
+    for dt in range(-tdelta, tdelta+1):
+        dv.append(vv[tdelta+dt:T-tdelta+dt] - vvtgt[tdelta:T-tdelta])
+    dv = np.min(np.abs(dv), 0)
+    assert np.max(dv) < absdelta
+
+
     
 def test_ttl():
     pulse1 = stimulus.TTL(80*ms)
@@ -38,10 +47,7 @@ def test_ttl():
         plt.plot(mockdata)
         plt.plot(data)
     if assertdata:
-        assertApprox(data[799], 5)
-        assertApprox(data[810], 0)
-        assertApprox(data[1020], 5)
-        assertApprox(data[4799], 5)
+        assertVecApprox(data, 5*mockdata, absdelta=1)
 
 
 def test_lowttl():
@@ -64,10 +70,7 @@ def test_lowttl():
         plt.plot(mockdata)
         plt.plot(data)
     if assertdata:
-        assertApprox(data[799], 0)
-        assertApprox(data[810], 5)
-        assertApprox(data[1020], 0)
-        assertApprox(data[4799], 0)
+        assertVecApprox(data, 5*mockdata, absdelta=1)
         
         
 
