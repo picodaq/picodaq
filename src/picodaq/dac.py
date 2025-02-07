@@ -351,9 +351,9 @@ class DigitalOut(Stream):
     If you do not specify a port, the most recently opened device is
     used, or the first device on the system if none was opened before.
 
-    The stimuli themselves are added by calling the `stimulus()`
-    method on the individual lines, which may be accessed using
-    indexing syntax, as in the following example::
+    The stimuli themselves are added by calling the `stimulus()` or
+    `sampled()` methods on the individual lines, which may be accessed
+    using indexing syntax, as in the following example::
 
         pulse1 = stimulus.TTL(40*ms)
         train1 = stimulus.Train(pulse1, 5, pulseperiod=100*ms)

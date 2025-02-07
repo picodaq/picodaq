@@ -521,6 +521,7 @@ class Quantity:
         return self.value / newmul
 
 
+
 class Time(Quantity):
     """Representation of a quantity that has units of time.
 
@@ -537,7 +538,14 @@ class Time(Quantity):
         self.as_("s") # assert that we are time
 
     def __repr__(self):
-        return f'Time("{self.definition()}")'
+        val = self.as_("s")
+        if val==0:
+            return "0*s"
+        elif abs(val)<1:
+            return f"{val*1000:3g}*ms"
+        else:
+            return f"{val:3g}*s"
+        #return f'Time("{self.definition()}")'
         
         
 class Voltage(Quantity):
@@ -555,7 +563,14 @@ class Voltage(Quantity):
         self.as_("V") # assert that we are voltage
 
     def __repr__(self):
-        return f'Voltage("{self.definition()}")'
+        val = self.as_("V")
+        if val==0:
+            return "0*V"
+        elif abs(val)<1:
+            return f"{val*1000:3g}*mV"
+        else:
+            return f"{val:3g}*V"
+        #return f'Voltage("{self.definition()}")'
 
 
 class Frequency(Quantity):        
@@ -577,7 +592,14 @@ class Frequency(Quantity):
         self.as_("Hz") # assert that we are frequency
 
     def __repr__(self):
-        return f'Frequency("{self.definition()}")'
+        val = self.as_("Hz")
+        if val==0:
+            return "0*Hz"
+        elif abs(val)<1000:
+            return f"{val:3g}*Hz"
+        else:
+            return f"{val/1000:3g}*kHz"
+        #return f'Frequency("{self.definition()}")'
         
         
 V = Voltage(1, 'V')

@@ -70,11 +70,17 @@ def mocktrain(train: Train, rate: Frequency, vv_V: ArrayLike, t0: Time):
     return vv_V
 
 
-def mockstim(stim: Parametrized,
-             rate: Frequency, duration: Time,
+def mockstim(stim: Parametrized | Pulse | Train | Series,
+             rate: Frequency, duration: Time | int | None = None,
              episodic: bool = False) -> np.array:
+    if isinstance(stim, Pulse) or isinstance(stim, Train) or isinstance(stim, Series):
+        stim = Parametrized(stim)
+    if duration is None:
+        duration = stim.series.duration()
+    if isinstance(duration, Time):
+        duration = int((rate*duration).plain())
     isttl = isinstance(stim.series.train.pulse, TTL)
-    vv_V = np.zeros(int((rate*duration).plain()),
+    vv_V = np.zeros(duration,
                     bool if isttl else np.float32)
     train = copy.copy(stim.series.train)
     period = stim.series.trainperiod
@@ -94,8 +100,10 @@ def mockstim(stim: Parametrized,
     return vv_V
 
 
-def mocksampled(stim: Sampled, rate: Frequency, duration: Time) -> np.array:
-    vv = np.zeros(int((rate*duration).plain()), np.float32)
+def mocksampled(stim: Sampled, rate: Frequency, duration: Time | int) -> np.array:
+    if isinstance(duration, Time):
+        duration = int((rate*duration).plain())
+    vv = np.zeros(duration, np.float32)
     N = len(vv)
     if callable(stim.data):
         i0 = 0
@@ -110,7 +118,7 @@ def mocksampled(stim: Sampled, rate: Frequency, duration: Time) -> np.array:
     return vv * stim.scale.as_("V")
 
 
-def mock(src: OutRef, duration: Time) -> np.array:
+def mock(src: OutRef, duration: Time | int) -> np.array:
     stim = src.stream.stimuli[src.idx]
     rate = src.stream.dev.rate
     episodic = src.stream.dev.epi_dur is not None

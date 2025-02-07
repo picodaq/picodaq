@@ -3,7 +3,7 @@ import serial.tools.list_ports
 import time
 import numpy as np
 from numpy.typing import ArrayLike
-from typing import Dict, Optional, List, Iterable
+from typing import Dict, Optional, List, Iterable, Any, Tuple
 import logging
 
 from .units import Hz, kHz, Time
@@ -124,13 +124,76 @@ def find(serno: str) -> str:
 
         Serial port name of found device
 
-    Raises exception if device is not found. See also `picodaqs`.
+    Raises exception if device is not found. See also `devices`.
     """
 
     for port, serno1 in picos().items():
         if serno1 == serno:
             return port
     raise DeviceError(f"No PicoDAQ found with serial number {serno}")
+
+
+def _vrange(vr: str) -> Tuple[float, float]:
+    if vr.startswith("±"):
+        vv = float(vr[1:])
+        return (-vv, vv)
+    else:
+        return (0, float(vr))
+
+
+def deviceinfo(port: Optional[str] = None) -> Dict[str,Any]:
+    """Detailed information about a picoDAQ device
+
+    Parameters:
+
+        port: Serial port name of device
+
+    Returns:
+
+        Dictionary with information
+
+    If no `port` is specified, the first device found on the system is
+    queried. If no device is found, an exception is raised.
+
+    The result is a dictionary defining the following keys:
+
+        firmware: the firmware version of the device
+        hardware: the hardware version of the device
+        serialno: the serial number of the device
+        analog_in_count: the number of analog input channels
+        analog_out_count: the number of analog output channels
+        digital_in_count: the number of digital input lines
+        digital_out_count: the number of digital output lines
+        max_sampling_rate_Hz: the maximum sampling rate, in hertz
+        analog_in_range_V: the input voltage range
+        analog_out_range_V: the input voltage range
+
+    Voltage ranges are returned as a tuple expressing the minimum and
+    maximum values in volts.
+
+    """
+    dev = PicoDAQ(port)
+    h1 = dev.command("picodaq")[-1]
+    h2 = dev.command("info")[-1]
+    _, vsn, ser = h1.split(" ")
+    info = {"firmware": vsn,
+            "serialno": ser}
+    aux = {}
+    for kv in h2.split(" ")[-1].split(","):
+        k, v = kv.split("=", 1)
+        aux[k] = v
+    info["hardware"] = aux["HW"]
+    info["analog_in_count"] = int(aux["AI"])
+    info["analog_out_count"] = int(aux["AO"])
+    info["digital_in_count"] = int(aux["DI"])
+    info["digital_out_count"] = int(aux["DO"])
+    info["max_sampling_rate_Hz"] = int(aux["F"]) * 1000
+    info["analog_in_range_V"] = _vrange(aux["VI"])
+    info["analog_out_range_V"] = _vrange(aux["VO"])
+            
+    return info
+    
+
 
 class PicoDAQ:
     _opendevs: List["PicoDAQ"] = []
@@ -186,7 +249,10 @@ class PicoDAQ:
         self.maxahead = None
 
         if not port:
-            port = devicelist[0][0]
+            ports = list(devices().keys())
+            if not ports:
+                raise DeviceError("No picoDAQs found")
+            port = ports[0]
         self.port = port
         for dev in PicoDAQ._opendevs:
             if port == dev.port:
@@ -207,7 +273,7 @@ class PicoDAQ:
     def episodic(self, duration: Time,
                  period: Time | None = None,
                  count: int | None = None) -> None:
-        """Select episodic recording mode.
+        """Select episodic recording mode
 
         Parameters:
             duration: Duration of each episode
@@ -243,7 +309,7 @@ class PicoDAQ:
         return self
 
     def continuous(self) -> None:
-        """Select continuous recording mode.
+        """Select continuous recording mode
 
         This cancels a previous call to `episodic`, which see.  You
         normally do not need to call this, as continuous recording is
@@ -258,7 +324,7 @@ class PicoDAQ:
         return self
 
     def trigger(self, source: int, polarity: int) -> None:
-        """Define triggering.
+        """Define triggering
 
         Parameters:
             source: the digital line to monitor
@@ -283,7 +349,7 @@ class PicoDAQ:
         return self
 
     def immediate(self) -> None:
-        """Disable triggering.
+        """Disable triggering
 
         This cancels a preceding call to `trigger` (which see), so
         recording commences immediately upon `start`. You normally do
@@ -298,7 +364,7 @@ class PicoDAQ:
         return self
 
     def start(self) -> None:
-        """Start the acquisition.
+        """Start the acquisition
 
         Both input and output are started in synchrony.  You typically
         do not have to call this explicitly, as reading from an
@@ -335,7 +401,7 @@ class PicoDAQ:
         log.debug("params = ", self.params)
 
     def stop(self) -> None:
-        """Stop the acquisition.
+        """Stop the acquisition
 
         You typically do not have to call this explicitly, as closing
         AnalogIn or DigitalIn does it automatically.
@@ -367,6 +433,10 @@ class PicoDAQ:
     def open(self, stream: "Stream" = None) -> None:
         """Open the device.
 
+        Parameters:
+
+            stream: reference to the calling stream
+        
         You typically do not have to call this directly. If you do,
         make sure that your calls to open() and to close() are
         matched.
@@ -486,6 +556,10 @@ class PicoDAQ:
                 
     def close(self, stream: "Stream" = None) -> None:
         """Stop and close the device.
+
+        Parameters:
+
+            stream: reference to the calling stream
 
         The device is stopped immediately, but only actually closed if
         no open streams remain. At that point, all parameters are
@@ -661,15 +735,20 @@ class PicoDAQ:
             dct[k] = v
         return dct         
             
-    def command(self, cmd, feedback=True) -> List[str]:
+    def command(self, cmd: str, feedback=True) -> List[str]:
         """Send a command and optionally collect feedback.
+
+        Parameters:
+
+            cmd: a command line for the picoDAQ device
+            feedback: whether to wait for confirmation
         
-        The given command is sent to the PicoDAQ.
+        The given command is sent directly to the picoDAQ. Consult the
+        hardware API for details.
 
         If `feedback` is True, waits for and returns feedback.
         Otherwise returns immediately and returns None.
 
-        This is a low-level call not intended for typical users.
         """
         log.debug(f"{time.time() - t0:.3f} >> {cmd}")
         self.ser.write(bytes(cmd + "\n", "utf8"))
@@ -678,8 +757,16 @@ class PicoDAQ:
             self.params[key] = None
             return self._getfeedback("+" + key)
         
-    def sendwave(self, idx: int, wav: np.ndarray):
-        """Send wave data"""
+    def sendwave(self, idx: int, wav: np.ndarray) -> None:
+        """Send wave data
+
+        Parameters:
+           idx: the index number of the wave
+           wav: the raw data as int16
+
+        The data are transmitted to the device using the "wave" command.
+
+        """
         if wav.dtype != np.int16:
             raise DeviceError("Wave must be int16")
         chk = checksum(wav)
@@ -692,8 +779,8 @@ class PicoDAQ:
             log.error(f"checksum {chk} != {self.params['wave']}")
             raise DeviceError("Checksum failed")
 
-    def isrunning(self):
-        """Reports whether the device has been started"""
+    def isrunning(self) -> bool:
+        """Report whether the device has been started"""
         if self.reader:
             return self.reader.active
         else:
