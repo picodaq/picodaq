@@ -3,7 +3,7 @@ from numpy.typing import ArrayLike
 import copy
 import logging
 
-from .units import V, s, ms, Hz, Voltage, Time, Frequency
+from .units import V, s, ms, Hz, Voltage, Time, Frequency, Quantity
 from .stimulus import Pulse, Train, Series, Parametrized, Sampled
 from .stimulus import TTL, Square, Sawtooth, Triangle, Wave
 from .dac import OutRef
@@ -77,7 +77,7 @@ def mockstim(stim: Parametrized | Pulse | Train | Series,
         stim = Parametrized(stim)
     if duration is None:
         duration = stim.series.duration()
-    if isinstance(duration, Time):
+    if isinstance(duration, Quantity):
         duration = int((rate*duration).plain())
     isttl = isinstance(stim.series.train.pulse, TTL)
     vv_V = np.zeros(duration,
@@ -101,7 +101,7 @@ def mockstim(stim: Parametrized | Pulse | Train | Series,
 
 
 def mocksampled(stim: Sampled, rate: Frequency, duration: Time | int) -> np.array:
-    if isinstance(duration, Time):
+    if isinstance(duration, Quantity):
         duration = int((rate*duration).plain())
     vv = np.zeros(duration, np.float32)
     N = len(vv)

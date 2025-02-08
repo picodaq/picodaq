@@ -157,8 +157,8 @@ class AnalogOut(Stream):
 
         The current implementation assumes S10 range.
         """
-        y = y.as_(V)
-        return int(32767.99999*y/10)
+        y = max(min(y.as_(V), 10), -10)
+        return int(32767.99*y/10)
 
     def _Ttosamples(self, t: Time) -> int:
         """Convert a time to a digital value.
@@ -169,7 +169,7 @@ class AnalogOut(Stream):
 
     def _configwave(self, chan, data, scale, pd_scale, td_scale):
         bindata = np.round(data * scale)
-        bindata[bindata < -32768] = -32768
+        bindata[bindata < -32767] = -32767
         bindata[bindata > 32767] = 32767
         bindata = bindata.astype(np.int16)
         pdA1 = int(np.round(pd_scale/scale * 256))
