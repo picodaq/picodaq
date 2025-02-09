@@ -264,16 +264,14 @@ class PicoDAQ:
         info["max_sampling_rate_Hz"] = int(aux["F"]) * 1000
         info["analog_in_range_V"] = _vrange(aux["VI"])
         info["analog_out_range_V"] = _vrange(aux["VO"])
-        print(info["analog_in_range_V"])
-        print(info["analog_out_range_V"])
-        print(self.params["islope"])
-        print(self.params["oslope"])
+    
         self.igain = (info["analog_in_range_V"][1]
                       * (1 - float(self.params["islope"])/1e3) / 32767.5)
-        self.ogain = [32767.99 / info["analog_out_range_V"][1]
-                      * (1 - float(x)/1e3)
-                      for x in self.params["oslope"].split(",")]
-        
+        self.ogain = tuple(32767.99 / info["analog_out_range_V"][1]
+                           * (1 - float(x)/1e3)
+                           for x in self.params["oslope"].split(","))
+        info["analog_in_rawgain_V"] = self.igain
+        info["analog_out_rawgain_perV"] = self.ogain
         self.info = info
         return info
         
