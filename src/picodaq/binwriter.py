@@ -90,9 +90,13 @@ class BinaryWriter:
             if self.raw[c]:
                 return yy
             else:
-                return ((yy * self.scale[c].as_('V')
+                y1 = (yy * self.scale[c].as_('V')
                          + self.offset[c].as_('V'))
-                        * 32767 / 10).astype(np.int16)
+                y1[y1 > 0] *= self.dev.ogain[1]
+                y1[y1 < 0] *= self.dev.ogain[0]
+                y1[y1<-32767] = -32767
+                y1[y1>32767] = 32767
+                return y1.astype(np.int16)
 
         fin = 0
         i0 = 2 # halfword offset into output data; skip header

@@ -155,10 +155,15 @@ class AnalogOut(Stream):
     def _Vtodigital(self, y: Voltage) -> int:
         """Convert a voltage to a digital value.
 
-        The current implementation assumes S10 range.
         """
         y = y.as_(V)
-        return int(32767.99999*y/10)
+        if y > 0:
+            z = self.dev.ogain[1] * y
+            return min(z, 32767)
+        else:
+            z = self.dev.ogain[0] * y
+            return max(z, -32767)
+
 
     def _Ttosamples(self, t: Time) -> int:
         """Convert a time to a digital value.
@@ -167,13 +172,15 @@ class AnalogOut(Stream):
         """
         return int((t * self.dev.rate).plain())
 
-    def _configwave(self, chan, data, scale, pd_scale, td_scale):
-        bindata = np.round(data * scale)
-        bindata[bindata < -32768] = -32768
+    def _configwave(self, chan, data, amp, pd_relscale, td_relscale):
+        bindata = data * amp.as_("V")
+        bindata[bindata < 0] *= dev.ogain[0]
+        bindata[bindata > 0] *= dev.ogain[1]
+        bindata[bindata < -32767] = -32767
         bindata[bindata > 32767] = 32767
         bindata = bindata.astype(np.int16)
-        pdA1 = int(np.round(pd_scale/scale * 256))
-        tdA1 = int(np.round(td_scale/scale * 256))
+        pdA1 = int(np.round(pd_relscale * 256))
+        tdA1 = int(np.round(td_relscale * 256))
         self.dev.sendwave(chan, bindata)
         self.dev.command(f"pulse A{chan} wave {chan}")
         return pdA1, tdA1
@@ -184,14 +191,17 @@ class AnalogOut(Stream):
             self.dev.command(pfx + "".join([f" {a}" for a in args]))
             
         name = stim.series.train.pulse.name
-        A1 = self._Vtodigital(stim.series.train.pulse.amplitude1)
+        a1 = stim.series.train.pulse.amplitude1
+        A1 = self._Vtodigital(a1)
         A2 = self._Vtodigital(stim.series.train.pulse.amplitude2)
         T1 = self._Ttosamples(stim.series.train.pulse.duration1)
         T2 = self._Ttosamples(stim.series.train.pulse.duration2)
         npulse = stim.series.train.pulsecount
         pulseival = self._Ttosamples(stim.series.train.pulseperiod)
-        pdA1 = self._Vtodigital(stim.series.train.perpulse.amplitude1)
-        pdA2 = self._Vtodigital(stim.series.train.perpulse.amplitude2)
+        pda1 = stim.series.train.perpulse.amplitude1
+        pdA1 = self._Vtodigital(pda1)
+        pda2 = stim.series.train.perpulse.amplitude2
+        pdA2 = self._Vtodigital(pda2)
         pdT1 = self._Ttosamples(stim.series.train.perpulse.duration1)
         pdT2 = self._Ttosamples(stim.series.train.perpulse.duration2)
         pdpival = self._Ttosamples(stim.series.train.perpulse.pulseperiod)
@@ -200,7 +210,8 @@ class AnalogOut(Stream):
         trainival = self._Ttosamples(stim.series.trainperiod)
         ntrain = stim.series.traincount
 
-        tdA1 = self._Vtodigital(stim.series.pertrain.amplitude1)
+        tda1 = stim.series.pertrain.amplitude1
+        tdA1 = self._Vtodigital(tda1)
         tdA2 = self._Vtodigital(stim.series.pertrain.amplitude2)
         tdT1 = self._Ttosamples(stim.series.pertrain.duration1)
         tdT2 = self._Ttosamples(stim.series.pertrain.duration2)
@@ -216,7 +227,9 @@ class AnalogOut(Stream):
         if name == "wave":
             pdA1, tdA1 = self._configwave(chan,
                                           stim.series.train.pulse.data,
-                                          A1, pdA1, tdA1)
+                                          a1,
+                                          (pda1/a1).plain(),
+                                          (tda1/a1).plain())
         else:
             sendcmd("pulse", name, A1, T1, A2, T2)
         sendcmd("train", npulse, pulseival)
@@ -351,9 +364,9 @@ class DigitalOut(Stream):
     If you do not specify a port, the most recently opened device is
     used, or the first device on the system if none was opened before.
 
-    The stimuli themselves are added by calling the `stimulus()`
-    method on the individual lines, which may be accessed using
-    indexing syntax, as in the following example::
+    The stimuli themselves are added by calling the `stimulus()` or
+    `sampled()` methods on the individual lines, which may be accessed
+    using indexing syntax, as in the following example::
 
         pulse1 = stimulus.TTL(40*ms)
         train1 = stimulus.Train(pulse1, 5, pulseperiod=100*ms)

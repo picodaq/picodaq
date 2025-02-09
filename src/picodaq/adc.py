@@ -159,7 +159,7 @@ class AnalogIn(Stream):
         else:
             data = super().read(amount)
         if not raw:
-            data = data.astype(np.float32) * 10 / 32768
+            data = data.astype(np.float32) * self.dev.igain
         if times:
             return data, times1
         else:

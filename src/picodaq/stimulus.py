@@ -531,6 +531,32 @@ class Series:
             t.apply(self.pertrain)
         return Vmin * V
 
+    def duration(self, tight: bool = False) -> Time:
+        """The duration of the series
+
+        Parameters:
+
+            tight: If true, the duration is measured to the end of the
+                    final pulse. Otherwise, it includes the (fictive)
+                    interval after the final pulse.
+        """
+        totdur = 0*s
+        per1 = self.trainperiod
+        trn = copy.copy(self.train)
+        per = dur = 0*s
+        for k in range(self.traincount):
+            dur = trn.duration(tight)
+            per = per1
+            if per < dur:
+                per = dur
+            totdur += per
+            per1 += self.pertrain.pulseperiod
+            trn.apply(self.pertrain)
+        if tight:
+            totdur -= per - dur
+        return totdur
+            
+
 
 class Parametrized:
     """Define a parametrized stimulation sequence for a single output
