@@ -174,8 +174,8 @@ class AnalogOut(Stream):
 
     def _configwave(self, chan, data, amp, pd_relscale, td_relscale):
         bindata = data * amp.as_("V")
-        bindata[bindata < 0] *= dev.ogain[0]
-        bindata[bindata > 0] *= dev.ogain[1]
+        bindata[bindata < 0] *= self.dev.ogain[0]
+        bindata[bindata > 0] *= self.dev.ogain[1]
         bindata[bindata < -32767] = -32767
         bindata[bindata > 32767] = 32767
         bindata = bindata.astype(np.int16)
