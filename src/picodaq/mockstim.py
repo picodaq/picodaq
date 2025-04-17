@@ -101,7 +101,7 @@ def mockstim(stim: Parametrized | Pulse | Train | Series,
 
 
 def mocksampled(stim: Sampled, rate: Frequency, duration: Time | int) -> np.array:
-    if isinstance(duration, Quantity):
+    if isinstance(duration, Time):
         duration = int((rate*duration).plain())
     vv = np.zeros(duration, np.float32)
     N = len(vv)

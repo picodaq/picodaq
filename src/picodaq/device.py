@@ -173,27 +173,8 @@ def deviceinfo(port: Optional[str] = None) -> Dict[str,Any]:
 
     """
     dev = PicoDAQ(port)
-    h1 = dev.command("picodaq")[-1]
-    h2 = dev.command("info")[-1]
-    _, vsn, ser = h1.split(" ")
-    info = {"firmware": vsn,
-            "serialno": ser}
-    aux = {}
-    for kv in h2.split(" ")[-1].split(","):
-        k, v = kv.split("=", 1)
-        aux[k] = v
-    info["hardware"] = aux["HW"]
-    info["analog_in_count"] = int(aux["AI"])
-    info["analog_out_count"] = int(aux["AO"])
-    info["digital_in_count"] = int(aux["DI"])
-    info["digital_out_count"] = int(aux["DO"])
-    info["max_sampling_rate_Hz"] = int(aux["F"]) * 1000
-    info["analog_in_range_V"] = _vrange(aux["VI"])
-    info["analog_out_range_V"] = _vrange(aux["VO"])
-            
-    return info
-    
-
+    return dev.info
+  
 
 class PicoDAQ:
     _opendevs: List["PicoDAQ"] = []
@@ -260,7 +241,40 @@ class PicoDAQ:
         
         self.ser = Serial(port, timeout=0.1, write_timeout=0.2)
         log.info(f"Connected to PicoDAQ at {port}")
+        self._getinfo()
         self.ser.close()
+
+    def _getinfo(self):
+        h1 = self.command("picodaq")[-1]
+        h2 = self.command("info")[-1]
+        self.command("islope")
+        self.command("oslope")
+        _, vsn, ser = h1.split(" ")
+        info = {"firmware": vsn,
+                "serialno": ser}
+        aux = {}
+        for kv in h2.split(" ")[-1].split(","):
+            k, v = kv.split("=", 1)
+            aux[k] = v
+        info["hardware"] = aux["HW"]
+        info["analog_in_count"] = int(aux["AI"])
+        info["analog_out_count"] = int(aux["AO"])
+        info["digital_in_count"] = int(aux["DI"])
+        info["digital_out_count"] = int(aux["DO"])
+        info["max_sampling_rate_Hz"] = int(aux["F"]) * 1000
+        info["analog_in_range_V"] = _vrange(aux["VI"])
+        info["analog_out_range_V"] = _vrange(aux["VO"])
+    
+        self.igain = (info["analog_in_range_V"][1]
+                      * (1 - float(self.params["islope"])/1e3) / 32767.5)
+        self.ogain = tuple(32767.99 / info["analog_out_range_V"][1]
+                           * (1 - float(x)/1e3)
+                           for x in self.params["oslope"].split(","))
+        info["analog_in_rawgain_V"] = self.igain
+        info["analog_out_rawgain_perV"] = self.ogain
+        self.info = info
+        return info
+        
 
     def setaichannels(self, channels: Iterable[int]) -> None:
         self.aichannels = channels
