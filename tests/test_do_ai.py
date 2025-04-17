@@ -77,6 +77,7 @@ def test_lowttl():
 if __name__ == "__main__":
     print("""Make sure there is a BNC cable between DO1 and AI2
     before running this test""")
+    input()
     assertdata = True
     plot = True
     plt.ion()

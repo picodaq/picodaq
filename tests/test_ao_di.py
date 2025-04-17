@@ -87,6 +87,7 @@ def test_pulse_episodic():
 if __name__ == "__main__":
     print("""Make sure there is a BNC cable between AO3 and DI1
     before running this test""")
+    input()
     assertdata = True
     plot = True
     plt.ion()
