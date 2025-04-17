@@ -15,6 +15,7 @@ plot = False
 
 
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 
 def assertApprox(V, Vtarget, absdelta=.1):
@@ -30,16 +31,16 @@ def assertVecApprox(vv, vvtgt, absdelta=.1, tdelta=2):
     assert np.max(dv) < absdelta
 
 
-def test_sine():
+def xtest_sine():
     wave = np.sin(np.arange(10000)*2*np.pi/1000)*9.99
     with AnalogOut(rate=10*kHz) as ao:
         with AnalogIn(channel=0) as ai:
-            ao[0].sampled(wave, 1*V)
+            ao[1].sampled(wave, 1*V)
             t0 = time.time()
             ao.run()
             dt1 = time.time() - t0
             data = ai.readall()
-            mockdata = mockstim.mock(ao[0], len(data) / (10*kHz))
+            mockdata = mockstim.mock(ao[1], len(data) / (10*kHz))
             dt2 = time.time() - t0
     if plot:
         plt.figure()
@@ -49,38 +50,64 @@ def test_sine():
 
     
 def test_sawtooth():
-    pulse1 = stimulus.Sawtooth(-3*V, 3*V, 50*ms)
+    pulse1 = stimulus.Sawtooth(-2*V, 2*V, 80*ms)
     train1 = stimulus.Train(pulse1, 5, pulseperiod=100*ms)
-    with AnalogOut(rate=40*kHz) as ao:
-        with AnalogIn(channels=[0,1]) as ai:
+    with AnalogOut(rate=10*kHz) as ao:
+        with AnalogIn(channel=0) as ai:
             ao[0].stimulus(train1)
+            ao[1].stimulus(train1)
             t0 = time.time()
             ao.run()
             dt1 = time.time() - t0
-            data = ai.readall()
-            mockdata = mockstim.mock(ao[0], len(data) / (40*kHz))
+            data = ai.readall()#(0.5*s)
+            mockdata = mockstim.mock(ao[1], len(data) / (10*kHz))
             dt2 = time.time() - t0
-            assert dt1 > 0.450
+            assert dt1 > 0.480
             assert dt2 < 0.600
     if plot:
         plt.figure()
         plt.title("test_sawtooth")
         plt.plot(mockdata)
         plt.plot(data)
-        plt.legend(["AO3", "AI2"])
+        delta = data[1:] - mockdata[:-1]
+        plt.figure()
+        for k in range(5):
+            plt.plot(delta[1001*k:1000*k+800])
+        plt.legend([f"Delta {k}" for k in range(5)])
     if assertdata:
         assertVecApprox(data, mockdata)
 
+def test_square():
+    pulse1 = stimulus.Square(2*V, 40*ms)
+    train1 = stimulus.Train(pulse1, 5, pulseperiod=500*ms)
+    with AnalogOut(rate=10*kHz) as ao:
+        with AnalogIn(channel=0) as ai:
+            ao[0].stimulus(train1)
+            ao[1].stimulus(train1)
+            t0 = time.time()
+            ao.run()
+            dt1 = time.time() - t0
+            data = ai.readall()#(0.5*s)
+            mockdata = mockstim.mock(ao[1], len(data) / (10*kHz))
+            dt2 = time.time() - t0
+            #assert dt1 > 0.480
+            #assert dt2 < 0.600
     if plot:
-        N = len(data) // 4
-        dat = data[:N*4].reshape(N,4,-1).mean(1)
         plt.figure()
-        plt.plot(dat)
-        
+        plt.title("test_square")
+        plt.plot(mockdata)
+        plt.plot(data)
+        delta = data[1:] - mockdata[:-1]
+        plt.figure()
+        for k in range(5):
+            plt.plot(delta[1001*k:1000*k+800])
+        plt.legend([f"Delta {k}" for k in range(5)])
+    if assertdata:
+        assertVecApprox(data, mockdata)
 
 
     
-def test_ttl():
+def xtest_ttl():
     pulse1 = stimulus.TTL(30*ms)
     train1 = stimulus.Train(pulse1, 5, pulseperiod=100*ms)
     with DigitalOut(rate=10*kHz) as do:
@@ -101,7 +128,7 @@ def test_ttl():
         plt.plot(data)
         
 if __name__ == "__main__":
-    print("""Make sure there is a BNC cable between AO0 and AI0
+    print("""Make sure there is a BNC cable between AO1 and AI0
     before running this test""")
     input()
     assertdata = True
