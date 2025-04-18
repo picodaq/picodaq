@@ -267,11 +267,12 @@ class PicoDAQ:
     
         self.igain = (info["analog_in_range_V"][1]
                       * (1 - float(self.params["islope"])/1e3) / 32767.5)
-        self.ogain = tuple(32767.99 / info["analog_out_range_V"][1]
-                           * (1 - float(x)/1e3)
-                           for x in self.params["oslope"].split(","))
+        self.ogain = (32767.99 / info["analog_out_range_V"][1]
+                      / (1 + float(self.params["oslope"].split(",")[0])/1e3))
+        #self.ooffset = -self.ogain * float(self.params["oslope"].split(",")[1])/1e3
         info["analog_in_rawgain_V"] = self.igain
         info["analog_out_rawgain_perV"] = self.ogain
+        #info["analog_out_rawoffset"] = self.ooffset
         self.info = info
         return info
         

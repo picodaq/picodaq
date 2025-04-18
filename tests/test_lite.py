@@ -78,8 +78,8 @@ def test_sawtooth():
         assertVecApprox(data, mockdata)
 
 def test_square():
-    pulse1 = stimulus.Square(2*V, 40*ms)
-    train1 = stimulus.Train(pulse1, 5, pulseperiod=500*ms)
+    pulse1 = stimulus.Square(2*V, 1000*ms)
+    train1 = stimulus.Train(pulse1, 5, pulseperiod=3000*ms)
     with AnalogOut(rate=10*kHz) as ao:
         with AnalogIn(channel=0) as ai:
             ao[0].stimulus(train1)
