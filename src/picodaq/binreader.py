@@ -15,9 +15,9 @@ FLAGS_INBUF_NEARFULL = np.uint8(0x20)
 FLAGS_INBUF_FULL = np.uint8(0x30)
 
 log = logging.getLogger(__name__)
-debug = True
+debug = False
 
-log.setLevel(logging.DEBUG)
+#log.setLevel(logging.DEBUG)
 
 
 

@@ -156,13 +156,9 @@ class AnalogOut(Stream):
         """Convert a voltage to a digital value.
 
         """
-        y = y.as_(V)
-        if y > 0:
-            z = self.dev.ogain[1] * y
-            return min(z, 32767)
-        else:
-            z = self.dev.ogain[0] * y
-            return max(z, -32767)
+        y = y.as_(V) * self.dev.ogain + self.dev.ooffset
+        return min(max(int(y+.5), -32767), 32767)
+        
 
 
     def _Ttosamples(self, t: Time) -> int:
@@ -173,9 +169,7 @@ class AnalogOut(Stream):
         return int((t * self.dev.rate).plain())
 
     def _configwave(self, chan, data, amp, pd_relscale, td_relscale):
-        bindata = data * amp.as_("V")
-        bindata[bindata < 0] *= self.dev.ogain[0]
-        bindata[bindata > 0] *= self.dev.ogain[1]
+        bindata = data * amp.as_("V") * self.dev.ogain + self.dev.ooffset
         bindata[bindata < -32767] = -32767
         bindata[bindata > 32767] = 32767
         bindata = bindata.astype(np.int16)
