@@ -16,7 +16,7 @@ plot = False
 
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 
 def assertApprox(V, Vtarget, absdelta=.1):
     assert abs(V - Vtarget) < absdelta
@@ -50,17 +50,19 @@ def xtest_sine():
 
     
 def test_sawtooth():
+    fs = 75*kHz
     pulse1 = stimulus.Sawtooth(-2*V, 2*V, 80*ms)
     train1 = stimulus.Train(pulse1, 5, pulseperiod=100*ms)
-    with AnalogOut(rate=10*kHz) as ao:
-        with AnalogIn(channel=0) as ai:
+    with AnalogOut(rate=fs) as ao:
+        with AnalogIn(channels=[0]) as ai:
             ao[0].stimulus(train1)
             ao[1].stimulus(train1)
+            print(ao.dev.rate)
             t0 = time.time()
             ao.run()
             dt1 = time.time() - t0
             data = ai.readall()#(0.5*s)
-            mockdata = mockstim.mock(ao[1], len(data) / (10*kHz))
+            mockdata = mockstim.mock(ao[1], len(data) / fs)
             dt2 = time.time() - t0
             assert dt1 > 0.480
             assert dt2 < 0.600

@@ -269,7 +269,7 @@ class PicoDAQ:
         oslp = [float(x) for x in self.params["oslope"].split(",")]
         self.igain = (info["analog_in_range_V"][1]
                       * (1 - islp[0]/1e3) / 32767.5)
-        self.ioffset = oslp[1]/1e3 # volts
+        self.ioffset = -islp[1]/1e3 # volts
         self.ogain = (32767.99 / info["analog_out_range_V"][1]
                       / (1 + oslp[0]/1e3))
         self.ooffset = -self.ogain * oslp[1]/1e3

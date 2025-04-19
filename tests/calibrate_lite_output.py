@@ -17,7 +17,8 @@ from picodaq import stimulus, V, s, ms, kHz, AnalogOut, AnalogIn, mockstim, Digi
 for v in range(1, 10):
     pulse1 = stimulus.Square(v*V, 4*s)
     with AnalogOut(rate=10*kHz) as ao:
-        ao.dev.ogain = (3276.7, 3276.7) # disable slope
+        ao.dev.ogain = 3276.799 # disable slope correction
+        ao.dev.ooffset = 0 # ... and offset
         ao[0].stimulus(pulse1)
         ao[1].stimulus(pulse1)
         ao.run()
