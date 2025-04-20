@@ -10,15 +10,19 @@ this can be as easy as
     with AnalogIn(channel=0, rate=50*kHz) as ai:
         data = ai.read(10*s)
 
-(See below for fully worked examples.)
-
 At present, the picodaq library supports our soon-to-be-released
 picoDAQ hardware. Support for other popular hardware (including National
 Instruments and Measurement Computing) is planned as well.
-    
-### Example of use
 
+## Features
 
+* Multi-channel data acquisition
+* Multi-channel analog output
+* Multi-channel signal generator
+* Continuous or episodic recording
+* Optional digital triggering
+* Synchronized digital input and output
+* All with a refreshingly simple API
 
 ## Installation
 
@@ -27,17 +31,17 @@ As easy as
     pip install picodaq
     
 
-## Fully worked examples
+## Examples of use
 
 ### Single-channel data acquisition
 
-We weren't kidding! After
+After
 
     from picodaq import *
     import matplotlib.pyplot as plt
     
 you really can acquire 10 seconds of data, sampled at 50 kHz from
-channel “0” of your data acquisition board simply by
+channel “ai 0” of your data acquisition board simply by
 
     with AnalogIn(channel=0, rate=50*kHz) as ai:
         data = ai.read(10*s)
@@ -57,6 +61,11 @@ in seconds rather than sample numbers on your x-axis:
     plt.plot(time_s, data)
 
 
+## Documentation
+
+Full documentation for the picodaq library is at [picodaq.github.io](https://picodaq.github.io).
+
+
 ## Development
 
-Development of picodaq is on [github](https://github.com/wagenadl/picodaq).
+Development of the picodaq library is on [github](https://github.com/picodaq/picodaq).
