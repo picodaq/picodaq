@@ -194,7 +194,7 @@ class BinaryReader:
         self.lastflags = np.uint8(raw[0] & 255)
         self.laststatus = np.uint8(raw[0] >> 8)
         self.lastchunkno += 1
-        if self.lastchunkno & 65535 != raw[1] & 65535:
+        if self.lastchunkno & 65535 != int(raw[1]) & 65535:
             raise RuntimeError("Lost chunk")
 
         if debug:

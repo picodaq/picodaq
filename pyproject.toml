@@ -9,7 +9,7 @@ authors = [
 ]
 description = "Python library for picoDAQ data acquisition"
 readme = "README.md"
-version = "0.1.0"
+version = "0.1.4"
 dependencies = [
     "numpy",
     "scipy",
@@ -26,3 +26,5 @@ classifiers = [
 [project.urls]
 "Homepage" = "https://github.com/wagenadl/picodaq"
 
+[project.scripts]
+pdserver = "picodaq.pdserver:main"

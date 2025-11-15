@@ -5,7 +5,7 @@ from .units import Hz, kHz, s, ms, V, mV, Time, Frequency
 from .errors import DeviceError
 from .device import devices
 
-version = "0.1.241024"
+version = "0.1.4"
 
 __all__ = ["AnalogIn", "DigitalIn",
            "AnalogOut", "DigitalOut",
