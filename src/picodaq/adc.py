@@ -182,7 +182,7 @@ class AnalogIn(Stream):
                   in the function call.
 
 
-        Used after calling ``run()`` on AnalogOut or DigitalOut to
+        Used after calling ``run()`` on ``AnalogOut`` or ``DigitalOut`` to
         retrieve all the data recorded during the run. In continuous
         mode, returns a T-vector or T×C array. In episodic mode,
         returns an N×L or N×L×C array, where N is the number of
@@ -367,7 +367,7 @@ class DigitalIn(Stream):
                   in the function call.
 
 
-        Used after calling ``run()`` on AnalogOut or DigitalOut to
+        Used after calling ``run()`` on ``AnalogOut`` or ``DigitalOut`` to
         retrieve all the data recorded during the run. In continuous
         mode, returns a T-vector or T×C array. In episodic mode,
         returns an N×L or N×L×C array, where N is the number of

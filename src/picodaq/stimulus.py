@@ -582,9 +582,9 @@ class Parametrized:
     repeating the entire sequence. If not given, the stimulus does not
     repeat.
 
-    If a stimulus is used on an AnalogOut channel, the `offset`
+    If a stimulus is used on an ``AnalogOut`` channel, the `offset`
     voltage is applied continuously, even outside of pulses and
-    trains. On DigitalOut lines, the `offset` is ignored.
+    trains. On ``DigitalOut`` lines, the `offset` is ignored.
 
     """
 

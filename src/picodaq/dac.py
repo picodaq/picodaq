@@ -308,8 +308,8 @@ class AnalogOut(Stream):
         left running at the end of the sequence if the output stream
         was previously opened, and stopped if it was not.
 
-        If using both AnalogOut and DigitalOut, calling ``run()`` on
-        either has the same effect.
+        If using both ``AnalogOut`` and ``DigitalOut``, calling
+        ``run()`` on either has the same effect.
 
         Example::
 
