@@ -12,7 +12,7 @@ MAXRATE = 330 * kHz
 log = logging.getLogger(__name__)
 
 class Stream:
-    """Parent class for AnalogIn and friends
+    """Parent class for ``AnalogIn`` and friends
 
     This is a low-level class not intended for typical users.
     """
@@ -69,8 +69,8 @@ class Stream:
         open as long as any streams are open.
         
         Often, ``with ... as`` syntax is more convenient than calling
-        `open()` yourself. If you do call `open()` yourself, you must
-        match it with `close()`.
+        ``open()`` yourself. If you do call ``open()`` yourself, you must
+        match it with ``close()``.
         """
         if self.isopen:
             raise ValueError("Already open")
@@ -99,9 +99,9 @@ class Stream:
     def start(self):
         """Start data acquisition
 
-        You typically do not have to call this directly, as `read()`
+        You typically do not have to call this directly, as ``read()``
         calls it for you. If more than one stream is associated with a
-        single PicoDAQ device, calling `start()` on one stream
+        single PicoDAQ device, calling ``start()`` on one stream
         suffices to start all of them.
 
         The streams must be open before being started.
@@ -116,11 +116,11 @@ class Stream:
     def stop(self):
         """Stop data acquisition
         
-        You typically do not have to call this directly, as `close()`
-        (or the end of a `with ... as` block) calls it for you.
+        You typically do not have to call this directly, as ``close()``
+        (or the end of a ``with ... as`` block) calls it for you.
 
         If more than one stream is associated with a single PicoDAQ
-        device, calling `stop()` on one stream suffices to stop all of
+        device, calling ``stop()`` on one stream suffices to stop all of
         them.
         """
         if not self.isstarted:
@@ -138,7 +138,7 @@ class Stream:
             The number of scans in a standard chunk
 
         This is the number of scans that would be returned by the
-        low-level `readchunk()` method. The high-level `read()` method
+        low-level ``readchunk()`` method. The high-level ``read()`` method
         is most efficient if requested quantities are an integer
         multiple of this number.
 

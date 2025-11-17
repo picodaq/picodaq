@@ -19,24 +19,24 @@ class Deltas:
     Parameters:
     
         amplitude: additive change to the `amplitude` parameter of
-                    `Pulse`, `Square`, or `Triangle` shapes
+                    ``Pulse``, ``Square``, or ``Triangle`` shapes
 
         amplitude2: additive change to the `amplitude2` parameter of
-                     `Square` or `Triangle` shapes
+                     ``Square`` or ``Triangle`` shapes
     
         duration: additive change to the `duration` parameter of any shape
 
         duration2: additive change to the `duration2` parameter of
-                     `Square` or `Triangle` shapes
+                     ``Square`` or ``Triangle`` shapes
     
         start: additive change to the `start` parameter of the
-                `Sawtooth` shape
+                ``Sawtooth`` shape
 
         end: additive change to the `end` parameter of the
-              `Sawtooth` shape
+              ``Sawtooth`` shape
 
         scale: additive change to the `scale` parameter of the
-                `Wave` shape
+                ``Wave`` shape
 
         pulsecount: additive change to the number of pulses in a train
 
@@ -52,7 +52,7 @@ class Deltas:
         
     Applying changes to a parameter that does not exist for a given
     pulse may lead to unexpected behavior. For instance, you cannot
-    change the `duration` of a `Wave` stimulus.
+    change the `duration` of a ``Wave`` stimulus.
 
     It is an error to apply changes to `pulsecount` or `trainperiod`
     on a per-pulse basis, but changing `pulseperiod` on a per-pulse
@@ -132,7 +132,7 @@ class TTL(Pulse):
                      the pulse and low inside.
 
     This may only be applied to digital outputs. To send TTL
-    pulses to an analog output, use the Pulse shape with
+    pulses to an analog output, use the ``Pulse`` shape with
     amplitude set to 5 V.
 
     """
@@ -172,8 +172,10 @@ class Square(Pulse):
     two phases. There is never a delay between first and second phases.
 
     For a traditional function-generator square wave with peak-to-peak
-    amplitude A and frequency F, set amplitude = A/2 and duration = 0.5/F
-    and leave amplitude2 and duration2 unspecified.
+    amplitude `A` and frequency `F`, set `amplitude` = `A`/2 and
+    `duration` = 0.5/`F` and leave `amplitude2` and `duration2`
+    unspecified.
+
     """
 
     def __init__(self,
@@ -206,8 +208,8 @@ class Sawtooth(Pulse):
         duration: The duration of the ramp, in units of time.
 
     For a traditional function-generator sawtooth with peak-to-peak
-    amplitude A and frequency F, set start = -A/2, end = +A/2,
-    and duration = 1/F.
+    amplitude `A` and frequency `F`, set `start` = −`A`/2, `end` = +`A`/2,
+    and `duration` = 1/`F`.
     """    
     def __init__(self,
                  start: Voltage,
@@ -238,8 +240,8 @@ class Triangle(Pulse):
         duration: The duration of the second phase of the wave.
 
     To create a traditional function-generator triangle wave with
-    peak-to-peak amplitude A and frequency F, set amplitude = A/2
-    and duration = 0.5/F. A second phase with equal duration
+    peak-to-peak amplitude `A` and frequency `F`, set `amplitude` = `A`/2
+    and `duration` = 0.5/`F`. A second phase with equal duration
     and opposite polarity will be added automatically.
 
     To create asymmetric triangles, the parameters of the second
@@ -279,8 +281,8 @@ class Wave(Pulse):
                 voltage.
 
     For instance, to create a sine wave with 1 Vpp amplitude,
-    you could set data = np.sin(...) and scale = 0.5*V,
-    or equally, data = 0.5 * np.sin(...) and scale = 1*V.
+    you could set `data` = ``np.sin(...)`` and `scale` = ``0.5*V``,
+    or equally, `data` = ``0.5 * np.sin(...)`` and `scale` = ``1*V``.
     """
     
     def __init__(self, data: ArrayLike, scale: Voltage = 1*V,
@@ -311,9 +313,11 @@ class Train:
 
         perpulse: Changes to apply to parameters between pulses
 
-    For analog outputs, the `pulse` may be any of Pulse, Square,
-    Sawtooth, Triangle, or Wave; for digital outputs, it may only
-    be TTL.
+    For analog outputs, the `pulse` may be any of ``Pulse``,
+    ``Square``, ``Sawtooth``, ``Triangle``, or ``Wave``; for digital
+    outputs, it may only be ``TTL``. (To send a TTL pulse a an analog
+    output, do not use the ``TTL`` shape; instead, use a ``Pulse``
+    with amplitude set to 5 V.)
 
     Either the number of pulses must be specified (with `pulsecount`),
     or the total duration of the train (with `duration`), but not
@@ -326,10 +330,10 @@ class Train:
     is less than the duration of the pulse, the next pulse starts
     immediately after the previous one.
 
-    Deltas specified with `perpulse` are applied between pulses. That
-    is: The first pulse and the following period are as stated; the
-    second pulse and following period are modified by adding the
-    deltas once; etc.
+    ``Deltas`` specified with `perpulse` are applied between
+    pulses. That is: The first pulse and the following period are as
+    stated; the second pulse and following period are modified by
+    adding the deltas once; etc.
 
     """
     
@@ -451,16 +455,15 @@ class Series:
     except in episodic mode. If less than the duration of the train,
     the trains follow each other immediately.
 
-    Deltas specified with `pertrain` are applied between trains. That
-    is: The first train and the following period are as stated; the
-    second train and following period are modified by adding the
-    deltas once; the third train and following period are modified by
-    twice the deltas; etc.
+    ``Deltas`` specified with `pertrain` are applied between
+    trains. That is: The first train and the following period are as
+    stated; the second train and following period are modified by
+    adding the deltas once; the third train and following period are
+    modified by twice the deltas; etc.
 
     Instead of a train, it is allowed to make a series comprise
-    repeated individual pulses. This is strictly equivalent to
-    putting in a train comprising just that one pulse.
-
+    repeated individual pulses. This is strictly equivalent to putting
+    in a train comprising just that one pulse.
 
     """
     
@@ -563,7 +566,7 @@ class Parametrized:
 
     Parameters:
 
-        stim: a Series, a Train, or a single Pulse.
+        stim: a ``Series``, a ``Train``, or a single ``Pulse`` (or derivative).
 
         delay: delay to first pulse
 
@@ -571,18 +574,17 @@ class Parametrized:
 
         offset: offset voltage for the channel
 
-
-    The delay is measured from the start of the recording to the
+    The `delay` is measured from the start of the recording to the
     first pulse in continuous mode, or from the start of each
     episode to its first pulse in episodic mode.
 
-    The repeat period, if given, is the start-to-start period for
+    The `repeat` period, if given, is the start-to-start period for
     repeating the entire sequence. If not given, the stimulus does not
     repeat.
 
-    If a stimulus is used on an AnalogOut channel, the offset
+    If a stimulus is used on an AnalogOut channel, the `offset`
     voltage is applied continuously, even outside of pulses and
-    trains. On DigitalOut lines, the offset is ignored.
+    trains. On DigitalOut lines, the `offset` is ignored.
 
     """
 
@@ -611,19 +613,19 @@ class Sampled:
         offset: offset to be added after scaling
         raw: data represent raw binary values
 
-    You may either specify prepared data as an array (T-vector) or
-    specify a callable the generates the data on the fly and that
+    You may either specify prepared `data` as an array (T-vector) or
+    specify a callable that generates the data on the fly and that
     "yields" data in arbitrary quantities.
 
     The data (whether predefined or generated) are multiplied by the
-    given scale factor. Then, the given offset is added and the result
-    is converted to digital units. By default, the scale is one volt
-    and the offset is zero. Alternatively, if you specify raw=True,
-    you may specify data as raw binary values (16-bit signed
-    integers). In that case, scale and offset may not be specified.
+    given `scale` factor. Then, the given `offset` is added and the
+    result is converted to digital units. By default, the scale is one
+    volt and the offset is zero. Alternatively, if you specify `raw` =
+    ``True``, you may specify data as raw binary values (16-bit signed
+    integers). In that case, `scale` and `offset` may not be specified.
 
-    When digital data are represented as a Sampled, nonzero values map
-    to digital 1 and zero values to digital 0. In this case, the
+    When digital data are represented as a ``Sampled``, nonzero values
+    map to digital 1 and zero values to digital 0. In this case, the
     `scale`, `offset`, and `raw` parameters are ignored.
 
     """

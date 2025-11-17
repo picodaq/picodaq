@@ -92,13 +92,13 @@ class AnalogOut(Stream):
     opened before.
 
     The `maxahead` parameter specifies the maximum number of samples
-    preloaded to the device during open() and through poll(). If
+    preloaded to the device during ``open()`` and through ``poll()``. If
     omitted, this is optimized to reduce risk of underruns. The most
     common reason to set it explicitly is to reduce latency for
     dynamically generated "sampled" outputs.
 
-    The stimuli themselves are added by calling the `stimulus()` or
-    `sampled()` methods on the individual channels, which may be
+    The stimuli themselves are added by calling the ``stimulus()`` or
+    ``sampled()`` methods on the individual channels, which may be
     accessed using indexing syntax, as in the following example::
 
         pulse1 = stimulus.Sawtooth(-3*V, 3*V, 80*ms)
@@ -250,19 +250,19 @@ class AnalogOut(Stream):
         """Send all defined stimulus sequences to the device.
 
         In most cases, you do not need to use this method, as it is
-        called automatically by `start()` and `run()` as needed.
+        called automatically by ``start()`` and ``run()`` as needed.
         
         That said, committing takes several milliseconds, or more if
-        long waves need to be transmitted. By calling `commit()`
-        explicitly before calling `start()` or `run()`, you can
+        long waves need to be transmitted. By calling ``commit()``
+        explicitly before calling ``start()`` or ``run()``, you can
         control the timing of the start of the stimulation more
         precisely.
 
         If you make any changes to stimulation parameters, you will
         have to re-commit. The system understands that and will do it
-        for you upon `start()` or `run()`. However, relying on this
+        for you upon ``start()`` or ``run()``. However, relying on this
         behavior is not recommended, if only because it negates any
-        timing advantage of calling `commit()` ahead of time.
+        timing advantage of calling ``commit()`` ahead of time.
 
         """
         if not self.isopen:
@@ -300,7 +300,7 @@ class AnalogOut(Stream):
 
         This starts the device running. Once stimulation is complete,
         concurrently recorded data may be retrieved using the
-        `readall()` methods of AnalogIn and DigitalIn.
+        ``readall()`` methods of AnalogIn and DigitalIn.
 
         This method may be called whether or not the output stream was
         opened and returns the stream to the original state at the end
@@ -308,7 +308,7 @@ class AnalogOut(Stream):
         left running at the end of the sequence if the output stream
         was previously opened, and stopped if it was not.
 
-        If using both AnalogOut and DigitalOut, calling `run()` on
+        If using both AnalogOut and DigitalOut, calling ``run()`` on
         either has the same effect.
 
         Example::
@@ -358,8 +358,8 @@ class DigitalOut(Stream):
     If you do not specify a port, the most recently opened device is
     used, or the first device on the system if none was opened before.
 
-    The stimuli themselves are added by calling the `stimulus()` or
-    `sampled()` methods on the individual lines, which may be accessed
+    The stimuli themselves are added by calling the ``stimulus()`` or
+    ``sampled()`` methods on the individual lines, which may be accessed
     using indexing syntax, as in the following example::
 
         pulse1 = stimulus.TTL(40*ms)
@@ -372,7 +372,7 @@ class DigitalOut(Stream):
     used for output must be consecutive and their number may not be
     3. Lines are automatically added to the specified set as necessary
     to satisfy this constraint. If that creates a conflict with lines
-    used for digital input, `commit()` or `start()` will raise an
+    used for digital input, ``commit()`` or ``start()`` will raise an
     exception.
 
     """
@@ -411,8 +411,8 @@ class DigitalOut(Stream):
                  delay: Time = 0*s,
                  repeat: Time | None = None,
                  offset: Voltage = 0*V):
-        """The syntax `do[line].stimulus(stim, ...)` is generally
-        preferred over `do._stimulus(line, stim, ...)`.
+        """The syntax ``do[line].stimulus(stim, ...)`` is generally
+        preferred over ``do._stimulus(line, stim, ...)``.
 
         """
         
@@ -481,12 +481,12 @@ class DigitalOut(Stream):
         """Send all defined stimulus sequences to the device.
 
         In most cases, you do not need to use this method, as it is
-        called automatically by `start()` and `run()` as needed.
+        called automatically by ``start()`` and ``run()`` as needed.
         
         That said, committing takes several milliseconds. By calling
-        `commit()` explicitly before calling `start()` or `run()`, you
-        can control the timing of the start of the stimulation more
-        precisely.
+        ``commit()`` explicitly before calling ``start()`` or
+        ``run()``, you can control the timing of the start of the
+        stimulation more precisely.
 
         """
         if not self.isopen:

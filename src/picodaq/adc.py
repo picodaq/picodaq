@@ -27,7 +27,7 @@ class AnalogIn(Stream):
     to record from, but not both. Any combination of analog inputs 0,
     1, 2, and 3 may be used. The order in which you specify the
     channels in the constructor becomes the order in which they will
-    appear in the output from `read()`.
+    appear in the output from ``read()``.
 
     The `rate` may be specified in Hz or kHz. When using multiple
     streams, the rates must all be the same and only need to be
@@ -92,9 +92,9 @@ class AnalogIn(Stream):
         Returns:
             True if OK, else false.
 
-        You typically don't have to call this, as `start()` and
-        `read()` call it for you if you don't. To reduce the latency
-        between when you first call `read()` and when the first sample
+        You typically don't have to call this, as ``start()`` and
+        ``read()`` call it for you if you don't. To reduce the latency
+        between when you first call ``read()`` and when the first sample
         is acquired, you can call this ahead of time, but the
         difference is unlikely to be more than a millisecond.
 
@@ -122,7 +122,7 @@ class AnalogIn(Stream):
         number of samples read. Otherwise, the result is a T×C array,
         even if only one channel is in use.
 
-        Almost always, `read()` is more convenient in user code.
+        Almost always, ``read()`` is more convenient in user code.
 
         """
         if not self.dev.reader:
@@ -167,7 +167,7 @@ class AnalogIn(Stream):
 
     def readall(self, raw: bool = False,
              times: bool = False) -> np.ndarray:
-        """Read all data accumulated during run().
+        """Read all data accumulated during ``run()``.
 
         Parameters:
             raw: Whether to return raw data from the device or convert
@@ -182,7 +182,7 @@ class AnalogIn(Stream):
                   in the function call.
 
 
-        Used after calling run() on AnalogOut or DigitalOut to
+        Used after calling ``run()`` on AnalogOut or DigitalOut to
         retrieve all the data recorded during the run. In continuous
         mode, returns a T-vector or T×C array. In episodic mode,
         returns an N×L or N×L×C array, where N is the number of
@@ -307,7 +307,7 @@ class DigitalIn(Stream):
 
         The result is always a vector of interleaved bytes.
         
-        Almost always, `read()` is more convenient in user code.
+        Almost always, ``read()`` is more convenient in user code.
 
         """
         if not self.dev.reader:
@@ -352,7 +352,7 @@ class DigitalIn(Stream):
 
 
     def readall(self, raw: bool = False, times: bool = False) -> np.ndarray:
-        """Read all data accumulated during run().
+        """Read all data accumulated during ``run()``.
 
         Parameters:
             raw: Whether to return raw data from the device or convert
@@ -367,7 +367,7 @@ class DigitalIn(Stream):
                   in the function call.
 
 
-        Used after calling run() on AnalogOut or DigitalOut to
+        Used after calling ``run()`` on AnalogOut or DigitalOut to
         retrieve all the data recorded during the run. In continuous
         mode, returns a T-vector or T×C array. In episodic mode,
         returns an N×L or N×L×C array, where N is the number of

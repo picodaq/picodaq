@@ -107,7 +107,7 @@ def devices() -> Dict[str, str]:
 
         A dictionary mapping serial port names to serial numbers
 
-    See also `find`.
+    See also ``find``.
     """
     return {port: serno
             for port, serno in picos().items()
@@ -124,7 +124,7 @@ def find(serno: str) -> str:
 
         Serial port name of found device
 
-    Raises exception if device is not found. See also `devices`.
+    Raises exception if device is not found. See also ``devices``.
     """
 
     for port, serno1 in picos().items():
@@ -208,11 +208,11 @@ class PicoDAQ:
             port - Serial port of device to connect
 
         If no port is given, connects to the first device identified
-        by `devicelist` as a suitable candidate.
+        by ``devices()`` as a suitable candidate.
 
         You typically do not need to use this class directly. The
-        AnalogIn, DigitalIn, AnalogOut, and DigitalOut classes can
-        find the PicoDAQ by themselves.
+        ``AnalogIn``, ``DigitalIn``, ``AnalogOut``, and ``DigitalOut``
+        classes can find the PicoDAQ by themselves.
 
         """
         self.ser = None
@@ -299,25 +299,26 @@ class PicoDAQ:
             period: start-to-start time between episodes
             count: number of episodes before automatically stopping
 
-        The period is measured start-to-start and is optional if
+        The `period` is measured start-to-start and is optional if
         triggering is enabled, in which cases it specifies the
         minimum period.
 
-        Count, if given, specifies that the recording will stop
-        automatically after that number of episodes have been
-        recorded. Otherwise, it continues until the user stops the
-        recording.
+        The `count` parameter, if given, specifies that the recording
+        will stop automatically after that number of episodes have
+        been recorded. Otherwise, it continues until the user stops
+        the recording.
 
-        The duration of each episode may be lengthened slightly so
-        that it constitutes an even number of USB transfer chunks.
+        The specified `duration` of each episode may be internally
+        lengthened slightly so that it constitutes an even number of
+        USB transfer chunks.
 
         In episodic mode, the timing of any stimuli is modified such
         that there is one train per episode and the defined
-        inter-train intervals are ignored. The `delay` parameter on
-        the stimulus sets the time between start of episode and
-        first pulse.
+        inter-train intervals are ignored. The timing between start of
+        the episode and the first pulse of a stimulus is determined by
+        the `delay` parameter on the stimulus.
 
-        See also `continuous`.
+        See also ``continuous``.
 
         """
         self.epi_dur = duration
@@ -330,9 +331,9 @@ class PicoDAQ:
     def continuous(self) -> None:
         """Select continuous recording mode
 
-        This cancels a previous call to `episodic`, which see.  You
-        normally do not need to call this, as continuous recording is
-        the default.
+        This cancels a previous ``episodic(...)`` call.  You normally
+        do not need to call this, as continuous recording is the
+        default.
 
         """
         self.epi_dur = None
@@ -350,12 +351,14 @@ class PicoDAQ:
             polarity: edge on which to trigger
 
         The recording (whether continuous or episodic) is not actually
-        started until the given trigger condition is met. `Source` (0,
-        1, 2, or 3) specifies a digital channel. `Polarity` specifies
-        whether the system triggers on rising edge (`polarity` > 0) or
-        on falling edge (`polarity` < 0).
+        started until the given trigger condition is met. The `source`
+        parameter (0, 1, 2, or 3) specifies a digital channel. The
+        `polarity` parameter specifies whether the system triggers on
+        rising edge (`polarity` > 0) or on falling edge (`polarity` <
+        0).
 
-        See also `immediate`.
+        See also ``immediate``.
+
         """
         if source < 0 or source > 3:
             raise ValueError("Unsupported trigger source")
@@ -370,8 +373,8 @@ class PicoDAQ:
     def immediate(self) -> None:
         """Disable triggering
 
-        This cancels a preceding call to `trigger` (which see), so
-        recording commences immediately upon `start`. You normally do
+        This cancels a preceding ``trigger(...)`` call, so
+        recording commences immediately upon ``start()``. You normally do
         not have to call this, as immediate start is the default
         operation.
 
@@ -387,7 +390,7 @@ class PicoDAQ:
 
         Both input and output are started in synchrony.  You typically
         do not have to call this explicitly, as reading from an
-        AnalogIn or DigitalIn automatically starts the acquisition.
+        ``AnalogIn`` or ``DigitalIn`` automatically starts the acquisition.
         """
         if self._starting:
             return
@@ -423,7 +426,7 @@ class PicoDAQ:
         """Stop the acquisition
 
         You typically do not have to call this explicitly, as closing
-        AnalogIn or DigitalIn does it automatically.
+        ``AnalogIn`` or ``DigitalIn`` does it automatically.
         """
         if self._stopping:
             return
@@ -450,14 +453,14 @@ class PicoDAQ:
         self.close()
 
     def open(self, stream: "Stream" = None) -> None:
-        """Open the device.
+        """Open the device
 
         Parameters:
 
             stream: reference to the calling stream
         
         You typically do not have to call this directly. If you do,
-        make sure that your calls to open() and to close() are
+        make sure that your calls to ``open()`` and to ``close()`` are
         matched.
         """
         if len(self.openstreams) == 0:
@@ -537,7 +540,7 @@ class PicoDAQ:
             
     def _setupsampled(self, adata: Dict[int, "Sampled"],
                       ddata: Dict[int, "Sampled"]) -> None:
-        """Create a BinaryWriter and prefill buffer
+        """Create a ``BinaryWriter`` and prefill buffer
 
         Calculates optimal number of scans per chunk. This needs
         to know whether the acquisition is going to be episodic
@@ -546,8 +549,8 @@ class PicoDAQ:
         Sends the amount of data recommended by the response from
         the most recent "sampled" command.
 
-        Users don't call this. It is for AnalogOut to call from
-        within its commit() system.
+        Users don't call this. It is for ``AnalogOut`` to call from
+        within its ``commit()`` system.
 
         """
         if not adata and not ddata:
@@ -605,7 +608,7 @@ class PicoDAQ:
         """True if the device is currently open
 
         Returns true whether the device has been opened directly by
-        the user or indirectly through AnalogIn and friends.
+        the user or indirectly through ``AnalogIn`` and friends.
         """
         return len(self.openstreams) > 0
     
@@ -673,8 +676,8 @@ class PicoDAQ:
 
             unexpected - Set true if **ASCII was unexpected
 
-        "Unexpected" stops may be because of error or because of the
-        end of episodic acquisition.
+        "Unexpected" stops may occur because of error or because of
+        the end of episodic acquisition.
 
         Collects and prints any "!" error lines before stop.
 

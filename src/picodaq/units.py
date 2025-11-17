@@ -187,7 +187,7 @@ def _factordecode(fac: str) -> Tuple[float, np.array]:
 class Quantity:
     """Representation of a value with associated units
         
-    `Quantity(value, units)`, where `value` is a number and
+    ``Quantity(value, units)``, where `value` is a number and
     `units` a string, represents the given quantity. For instance::
 
         Quantity(9.81, 'm/s^2')
@@ -236,7 +236,7 @@ class Quantity:
       exception.
 
     - Dimensionless quantities can be converted back to plain numbers
-      with the plain() method. For instance::
+      with the ``plain()`` method. For instance::
     
           (Quantity("10 kHz") * Quantity("10 ms")).plain() # -> 100
 
@@ -323,10 +323,10 @@ class Quantity:
     def definition(self, withoutvalue: bool = False) -> str:
         """Definition of stored value in SI units
         
-        `definition()` returns the definition of the stored quantity
+        ``definition()`` returns the definition of the stored quantity
         in terms of SI base units.
 
-        `definition(True)` returns only the base units without
+        ``definition(True)`` returns only the base units without
         multiplying the value into it.
 
         """
@@ -471,13 +471,13 @@ class Quantity:
     def plain(self, warn: bool = False) -> float | np.ndarray:
         """Convert to dimensionless
         
-        `plain()` returns a dimensionless quantity as a plain number.
+        ``plain()`` returns a dimensionless quantity as a plain number.
         
         An exception is raised if the units are incompatible. That is ::
        
             (10 * kHz * 5 * ms).plain()
         
-        returns `50`, whereas ::
+        returns ``50``, whereas ::
 
             (10 * V / s).plain()
 
@@ -492,7 +492,7 @@ class Quantity:
     def as_(self, newunit: str | Self, warn: bool = False) -> float | np.ndarray:
         """Convert to different units
         
-        `as_(newunits)` returns the numeric value of the stored
+        ``as_(newunits)`` returns the numeric value of the stored
         quantity expressed in the new units.
 
         An exception is raised if the units are incompatible.
@@ -611,15 +611,15 @@ instead of the more cumbersome `Voltage(5, "V")`."""
 mV = Voltage(1, 'mV')
 """The unit millivolt
 
-Provided for convenience because `10 * mV` is easier to read
-than `0.01 * V`.
+Provided for convenience because ``10 * mV`` is easier to read
+than ``0.01 * V``.
 """
 
 s = Time(1, 's')
 """The unit second
 
-This allows passing expressions like `1.5 * s` to definitions of stimuli
-instead of the more cumbersome `Time(15, "s")`.
+This allows passing expressions like ``1.5 * s`` to definitions of stimuli
+instead of the more cumbersome ``Time(15, "s")``.
 
 """
 
@@ -637,6 +637,6 @@ Hz = Frequency(1, 'Hz')
 kHz = Frequency(1, 'kHz')
 """The unit kilohertz
 
-This allows passing expressions like `30 * kHz` as a sampling rate
-instead of the more cumbersome `Frequency("30 kHz")`.
+This allows passing expressions like ``30 * kHz`` as a sampling rate
+instead of the more cumbersome ``Frequency("30 kHz")``.
 """

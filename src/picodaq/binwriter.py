@@ -74,9 +74,9 @@ class BinaryWriter:
 
         Critically, this does not guarantee that all data have been
         sent out from the device into the world. For that, check the
-        flags() from the binary reader.
+        ``flags()`` from the binary reader.
 
-        It is OK to call sendchunk data after productionfinished
+        It is OK to call ``sendchunk(...)`` after ``productionfinished()``
         becomes True.
 
         """
@@ -167,10 +167,11 @@ class BinaryWriter:
 
             True if more data remain to be sent
 
-        If `pre` is true, sending of the data is preceded by an
+        If `pre` is ``True``, sending of the data is preceded by an
         "outdata" command and the returned checksum is checked. Use
-        this before start()ing the acquisition. Once the device is in
-        binary mode, use pre=False to just send the data.
+        this before you ``start()`` the acquisition. Once the device
+        is in binary mode, set `pre` to ``False`` to send the data
+        without preceding material.
 
         """
         if self.finished:
