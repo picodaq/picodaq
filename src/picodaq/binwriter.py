@@ -86,17 +86,13 @@ class BinaryWriter:
     def _filladata(self, data: np.ndarray) -> Tuple[int, int]:
         def _toraw(c, yy):
             if debug:
-                log.debug(f"filla {np.std(yy)}")
+                log.debug(f"filla {yy.shape} {yy.dtype} {np.std(yy)}")
             if self.raw[c]:
                 return yy
-            else:
-                y1 = (yy * self.scale[c].as_('V')
-                         + self.offset[c].as_('V'))
-                y1[y1 > 0] *= self.dev.ogain[1]
-                y1[y1 < 0] *= self.dev.ogain[0]
-                y1[y1<-32767] = -32767
-                y1[y1>32767] = 32767
-                return y1.astype(np.int16)
+            y1 = (yy * self.scale[c].as_('V')
+                  + self.offset[c].as_('V')) * self.dev.ogain
+            y1.clip(-32767, 32767)
+            return y1.astype(np.int16)
 
         fin = 0
         i0 = 2 # halfword offset into output data; skip header
@@ -107,7 +103,7 @@ class BinaryWriter:
                 if debug:
                     log.debug(f"binwr {k} {c} {n0} {M}")
                 if self.adata[c] is None:
-                    data[i0:i0+M] = _toraw(c, np.array(0))
+                    data[i0:i0+M] = _toraw(c, np.array([0]))
                     fin += 1
                     i0 += M
                     n0 += M
@@ -120,8 +116,11 @@ class BinaryWriter:
                     if M < len(self.adata[c]):
                         self.adata[c] = self.adata[c][M:]
                     elif c in self.agen:
-                        self.adata[c] = next(self.agen[c])
-                        log.debug(f"next {c} {np.mean(self.adata[c]):.3f} {np.std(self.adata[c]):.3f} {self.adata[c].shape}")
+                        try:
+                            self.adata[c] = next(self.agen[c])
+                            log.debug(f"next {c} {np.mean(self.adata[c]):.3f} {np.std(self.adata[c]):.3f} {self.adata[c].shape}")
+                        except StopIteration:
+                            self.adata[c] = None
                     else:
                         self.adata[c] = None
         return fin, i0

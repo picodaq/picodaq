@@ -1,7 +1,8 @@
 import numpy as np
 from numpy.typing import ArrayLike
-import copy
+from collections.abc import Iterable
 import logging
+import copy
 
 from .units import V, s, ms, Hz, Voltage, Time, Frequency, Quantity
 from .stimulus import Pulse, Train, Series, Parametrized, Sampled
@@ -20,7 +21,7 @@ def mockpulse(pulse: Pulse, rate: Frequency,
     dt_s = 1/rate.as_("Hz")
     t0_s = t0.as_("s")
     t1_s = pulse.duration1.as_("s")
-    t2_s = pulse.duration1.as_("s")
+    t2_s = pulse.duration2.as_("s")
     if isinstance(pulse, TTL):
         v1_V = 5
         v2_V = 0
@@ -57,6 +58,8 @@ def mockpulse(pulse: Pulse, rate: Frequency,
 
 
 def mocktrain(train: Train, rate: Frequency, vv_V: ArrayLike, t0: Time):
+    """Represent a train as a vector of samples
+    """
     dt_s = 1 / rate.as_("Hz")
     pulse = copy.copy(train.pulse)
     log.debug(f"mocktrain {train.pulse} {pulse}")
@@ -72,9 +75,14 @@ def mocktrain(train: Train, rate: Frequency, vv_V: ArrayLike, t0: Time):
 
 def mockstim(stim: Parametrized | Pulse | Train | Series,
              rate: Frequency, duration: Time | int | None = None,
-             episodic: bool = False) -> np.array:
+             episodic: bool = False,
+             delay: Time = 0*s,
+             repeat: Time | None = None,
+             offset: Voltage = 0*V) -> np.array:
+    """Represent a parametric stimulus as a vector of samples    
+    """
     if isinstance(stim, Pulse) or isinstance(stim, Train) or isinstance(stim, Series):
-        stim = Parametrized(stim)
+        stim = Parametrized(stim, delay, repeat, offset)
     if duration is None:
         duration = stim.series.duration()
     if isinstance(duration, Quantity):
@@ -82,6 +90,12 @@ def mockstim(stim: Parametrized | Pulse | Train | Series,
     isttl = isinstance(stim.series.train.pulse, TTL)
     vv_V = np.zeros(duration,
                     bool if isttl else np.float32)
+    if duration == 0:
+        return vv_V
+    if not isttl:
+        vv_V += stim.offset.as_(V)
+    v0 = vv_V[0]
+    pulse = copy.copy(stim.series.train.pulse)
     train = copy.copy(stim.series.train)
     period = stim.series.trainperiod
     N = stim.series.traincount
@@ -90,32 +104,50 @@ def mockstim(stim: Parametrized | Pulse | Train | Series,
         vv_V = vv_V.reshape(1, -1).repeat(N, 0)
         for k in range(N):
             mocktrain(train, rate, vv_V[k], t0)
+            train.apply(stim.series.pertrain)
     else:
         for k in range(N):
             mocktrain(train, rate, vv_V, t0)
             t0 += period
             period += stim.series.pertrain.trainperiod
+            train.apply(stim.series.pertrain)
+    if episodic:
+        vv_V = np.concatenate([np.zeros((N,1), dtype=vv_V.dtype), vv_V], 1)
+        vv_V[0,0] = v0
+        for n in range(1, N):
+            vv_V[n, 0] = vv_V[n - 1, -1]
+    else:
+        vv_V = np.concatenate([np.zeros((1), dtype=vv_V.dtype), vv_V], 0)
+        vv_V[0] = v0    
     if isttl and stim.series.train.pulse.amplitude1:
         vv_V = np.logical_not(vv_V)
     return vv_V
 
 
-def mocksampled(stim: Sampled, rate: Frequency, duration: Time | int) -> np.array:
+def mocksampled(stim: ArrayLike | Iterable[ArrayLike],
+                scale: Voltage,
+                rate: Frequency,
+                duration: Time | int) -> np.array:
+    """Represent a continuously sampled stimulus as a vector of samples
+    """
+    
     if isinstance(duration, Time):
         duration = int((rate*duration).plain())
     vv = np.zeros(duration, np.float32)
     N = len(vv)
-    if callable(stim.data):
+    if callable(stim):
         i0 = 0
-        gen = stim.data()
+        gen = stim()
         for dat in gen:
-            n = min(len(dat), N - n0)
-            vv[i0:i0+n] = dat
+            n = min(len(dat), N - i0)
+            if n <= 0:
+                break
+            vv[i0:i0+n] = dat[:n]
             i0 += n
     else:
-        n = min(len(stim.data), N)
-        vv[:n] = stim.data[:n]
-    return vv * stim.scale.as_("V")
+        n = min(len(stim), N)
+        vv[:n] = stim[:n]
+    return vv * scale.as_("V")
 
 
 def mock(src: OutRef, duration: Time | int) -> np.array:

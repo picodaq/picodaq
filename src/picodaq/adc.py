@@ -4,16 +4,17 @@ import logging
 from numpy.typing import ArrayLike
 
 from .device import PicoDAQ
-from .stream import Stream
+from .stream import Stream, IStream
 from .units import s, ms, Frequency, Time
 from .decorators import with_doc
+from . import dac
 
 debug = False
 
 log = logging.getLogger(__name__)
 
 
-class AnalogIn(Stream):
+class AnalogIn(IStream):
     """Main interface for acquiring analog data
 
     Parameters:
@@ -118,9 +119,9 @@ class AnalogIn(Stream):
 
         The shape of the result depends on whether the `channel` or
         `channels` parameter was used at construction time. If
-        `channel` was used, the result is a T-vector, where T is the
-        number of samples read. Otherwise, the result is a T×C array,
-        even if only one channel is in use.
+        `channel` was used, the result is a `T`-vector, where `T` is
+        the number of samples read. Otherwise, the result is a `T` ×
+        `C` array, even if only one channel is in use.
 
         Almost always, ``read()`` is more convenient in user code.
 
@@ -128,7 +129,8 @@ class AnalogIn(Stream):
         if not self.dev.reader:
             self.start()
         if not self.dev.reader.hasadata():
-            self.dev.reader.read()
+            dac._poll(self.dev)
+            #self.dev.reader.read()
         if not self.dev.reader.hasadata():
             return None
         data = self.dev.reader.fetchadata(_maxn)
@@ -139,14 +141,14 @@ class AnalogIn(Stream):
         else:
             return data
 
-    @with_doc(Stream.read)
+    @with_doc(IStream.read)
     def read(self, amount: Time | int | None = None,
              raw: bool = False,
              times: bool = False) -> np.ndarray:
         """The shape of the result depends on whether the `channel` or
         `channels` parameter was used at construction time. If
-        `channel` was used, the result is a T-vector, where T is the
-        number of samples read. Otherwise, the result is a T×C array,
+        `channel` was used, the result is a `T`-vector, where `T` is the
+        number of samples read. Otherwise, the result is a `T` × `C` array,
         even if only one channel is in use.
 
         If `raw` is true, signed 16-bit values from the DAC are
@@ -182,11 +184,12 @@ class AnalogIn(Stream):
                   in the function call.
 
 
-        Used after calling ``run()`` on ``AnalogOut`` or ``DigitalOut`` to
-        retrieve all the data recorded during the run. In continuous
-        mode, returns a T-vector or T×C array. In episodic mode,
-        returns an N×L or N×L×C array, where N is the number of
-        episodes and L is the number of scans per episode.
+        Used after calling ``run()`` on ``AnalogOut`` or
+        ``DigitalOut`` to retrieve all the data recorded during the
+        run. In continuous mode, returns a `T`-vector or `T` × `C`
+        array. In episodic mode, returns an `N` × `L` or `N` × `L` ×
+        `C` array, where `N` is the number of episodes and `L` is the
+        number of scans per episode.
 
         Example of reading just the data::
 
@@ -219,21 +222,21 @@ class AnalogIn(Stream):
                 return np.array([])
         
         M = self.dev.params.get('nchunks', 0)
-        if M:
+        if M: # episodic
             data = np.stack(data, 0)
             if times:
-                times1 = np.stack(times1, 0)
-        else:
+                times1 = times1[0]
+        else: # continuous
             data = np.concatenate(data, 0)
             if times:
-                times1 = times1[0]
+                times1 = np.concatenate(times1, 0)
         if times:
             return data, times1
         else:
             return data
             
         
-class DigitalIn(Stream):
+class DigitalIn(IStream):
     """Main interface for acquiring digital data
 
     You must specify either a single `line` or a list
@@ -313,18 +316,19 @@ class DigitalIn(Stream):
         if not self.dev.reader:
             self.start()
         if not self.dev.reader.hasddata():
-            self.dev.reader.read()
+            dac._poll(self.dev)
+            #self.dev.reader.read()
         if not self.dev.reader.hasddata():
             return None
         data = self.dev.reader.fetchddata(_maxn)
         return data
 
-    @with_doc(Stream.read)
+    @with_doc(IStream.read)
     def read(self, amount: Time | int | None = None,
              raw: bool = False, times: bool = False) -> np.ndarray:
         """If `raw` is given, the result is a vector of bytes with the
-        lines interleaved. Otherwise, the result is a T-vector or
-        T×C array of zeros and ones, one value per sample.
+        lines interleaved. Otherwise, the result is a `T`-vector or
+        `T` × `C` array of zeros and ones, one value per sample.
 
         Digital data must always be read in multiples of 8 scans
         divided by the number of lines. Requested amounts are rounded
@@ -367,11 +371,12 @@ class DigitalIn(Stream):
                   in the function call.
 
 
-        Used after calling ``run()`` on ``AnalogOut`` or ``DigitalOut`` to
-        retrieve all the data recorded during the run. In continuous
-        mode, returns a T-vector or T×C array. In episodic mode,
-        returns an N×L or N×L×C array, where N is the number of
-        episodes and L is the number of scans per episode.
+        Used after calling ``run()`` on ``AnalogOut`` or
+        ``DigitalOut`` to retrieve all the data recorded during the
+        run. In continuous mode, returns a `T`-vector or `T` × `C`
+        array. In episodic mode, returns an `N` × `L` or `N` × `L` ×
+        `C` array, where `N` is the number of episodes and `L` is the
+        number of scans per episode.
 
 
         Example of reading just the data::
@@ -405,14 +410,14 @@ class DigitalIn(Stream):
                 return np.array([])
 
         M = self.dev.params.get('nchunks', 0)
-        if M:
+        if M: # episodic
             data = np.stack(data, 0)
             if times:
-                times1 = np.stack(times1, 0)
-        else:
+                times1 = times1[0]
+        else: # continuous
              data = np.concatenate(data, 0)
              if times:
-                times1 = times1[0]
+                times1 = np.concatenate(times1, 0)
 
         if times:
             return data, times1

@@ -1,12 +1,12 @@
 from __future__ import annotations
 import numpy as np
 from numpy.typing import ArrayLike
-from typing import Optional, Callable, Iterable
+from typing import Optional, Iterable
 import logging
 
 from .device import PicoDAQ
 from .stream import Stream
-from .stimulus import Pulse, Train, Series, Parametrized, Sampled
+from .stimulus import Pulse, Train, Series, Parametrized, Sampled, TTL, Wave
 from .units import V, mV, s, ms, Hz, kHz, Time, Voltage, Frequency, Quantity
 from .decorators import with_doc
 from .utils import makemask, NScanCalc
@@ -14,6 +14,8 @@ from .binreader import FLAGS_STIMACTIVE
 
 log = logging.getLogger(__name__)
 debug = False
+if debug:
+    log.setLevel(logging.DEBUG)
 
 def _poll(dev, _forceqty=None):
     if not dev.reader:
@@ -67,7 +69,7 @@ class OutRef:
 
     @with_doc(Sampled)
     def sampled(self,
-                data: ArrayLike | Callable,
+                data: ArrayLike | Iterable[ArrayLike],
                 scale: Voltage = 1*V, offset: Voltage = 0*V,
                 raw: bool = False):
         self.stream._sampled(self.idx, data, scale, offset, raw)
@@ -142,11 +144,14 @@ class AnalogOut(Stream):
                  delay: Time = 0*s,
                  repeat: Time | None = None,
                  offset: Voltage = 0*V):
-        self.stimuli[channel] = Parametrized(stim, delay, repeat, offset)
+        para = Parametrized(stim, delay, repeat, offset)
+        if isinstance(para.series.train.pulse, TTL):
+            raise ValueError("To send TTL pulses to an analog output, use Pulse with amplitude = 5 volt")
+        self.stimuli[channel] = para
         self.committed = False
 
     def _sampled(self, channel: int,
-                 data: ArrayLike | Callable,
+                 data: ArrayLike | Iterable[ArrayLike],
                  scale: Voltage = 1*V, offset: Voltage = 0*V,
                  raw: bool = True):
         self.stimuli[channel] = Sampled(data, scale, offset, raw)
@@ -415,8 +420,12 @@ class DigitalOut(Stream):
         preferred over ``do._stimulus(line, stim, ...)``.
 
         """
-        
-        self.stimuli[line] = Parametrized(stim, delay, repeat, offset)
+
+        para = Parametrized(stim, delay, repeat, offset)
+        if not isinstance(para.series.train.pulse, TTL) \
+           and not isinstance(para.series.train.pulse, Wave):
+            raise ValueError("Only TTL and Wave pulses may be sent to digital output")
+        self.stimuli[line] = para
         self.committed = False
 
     @with_doc(AnalogOut._Ttosamples)
@@ -546,4 +555,4 @@ class DigitalOut(Stream):
         self.stop()
         if not wasopen:
             self.close()
-            
+        

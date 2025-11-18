@@ -13,7 +13,7 @@ from .binwriter import BinaryWriter
 from .errors import DeviceError
 
 log = logging.getLogger(__name__)
-debug = True#False # set true for more debug info
+debug = False # set true for more debug info
 if debug:
     log.setLevel(logging.DEBUG)
 t0 = time.time()
@@ -177,6 +177,21 @@ def deviceinfo(port: Optional[str] = None) -> Dict[str,Any]:
   
 
 class PicoDAQ:
+    """Representation of USB connection to PicoDAQ device
+
+    Parameters:
+
+        port: Serial port of device to connect
+
+    If no port is given, connects to the first device identified
+    by ``devices()`` as a suitable candidate.
+
+    You typically do not need to use this class directly. The
+    ``AnalogIn``, ``DigitalIn``, ``AnalogOut``, and ``DigitalOut``
+    classes can find the PicoDAQ by themselves.
+
+    """
+
     _opendevs: List["PicoDAQ"] = []
 
     @staticmethod
@@ -201,20 +216,6 @@ class PicoDAQ:
 
     
     def __init__(self, port: str | None = None):
-        """Representation of USB connection to PicoDAQ device
-
-        Parameters
-
-            port - Serial port of device to connect
-
-        If no port is given, connects to the first device identified
-        by ``devices()`` as a suitable candidate.
-
-        You typically do not need to use this class directly. The
-        ``AnalogIn``, ``DigitalIn``, ``AnalogOut``, and ``DigitalOut``
-        classes can find the PicoDAQ by themselves.
-
-        """
         self.ser = None
         self.openstreams = set()
         self._starting = False
@@ -617,7 +618,7 @@ class PicoDAQ:
 
         Parameters:
 
-            force - Re-verify unconditionally
+            force: Re-verify unconditionally
 
         You typically don't have to call this directly, as streams
         check for you.

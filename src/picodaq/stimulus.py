@@ -1,7 +1,8 @@
 from __future__ import annotations
 import numpy as np
 from numpy.typing import ArrayLike
-from typing import Optional, Callable
+from typing import Optional
+from collections.abc import Iterable
 import copy
 
 from .units import V, s, ms, Voltage, Time, Frequency
@@ -445,7 +446,7 @@ class Series:
 
         trainperiod: The period between consecutive trains.
 
-        pertrains: Changes to apply to parameters between trains.
+        pertrain: Changes to apply to parameters between trains.
 
     Either the number of trains much be specified (with `traincount`),
     or the total duration of the series (with `duration`), but not
@@ -545,7 +546,9 @@ class Series:
         """
         totdur = 0*s
         per1 = self.trainperiod
+        pul = copy.copy(self.train.pulse)
         trn = copy.copy(self.train)
+        trn.pulse = pul
         per = dur = 0*s
         for k in range(self.traincount):
             dur = trn.duration(tight)
@@ -593,7 +596,7 @@ class Parametrized:
                  delay: Time = 0*s,
                  repeat: Time | None = None,
                  offset: Voltage = 0*V):
-        
+
         if isinstance(stim, Train) or isinstance(stim, Pulse):
             self.series = Series(stim, 1, 0*ms)
         else:
@@ -613,7 +616,7 @@ class Sampled:
         offset: offset to be added after scaling
         raw: data represent raw binary values
 
-    You may either specify prepared `data` as an array (T-vector) or
+    You may either specify prepared `data` as an array (`T`-vector) or
     specify a callable that generates the data on the fly and that
     "yields" data in arbitrary quantities.
 
@@ -629,7 +632,7 @@ class Sampled:
     `scale`, `offset`, and `raw` parameters are ignored.
 
     """
-    def __init__(self, data: ArrayLike | Callable,
+    def __init__(self, data: ArrayLike | Iterable[ArrayLike],
                  scale: Voltage = 1*V, offset: Voltage = 0*V,
                  raw: bool = False):
         self.data = data
@@ -639,7 +642,8 @@ class Sampled:
         if raw:
             if self.scale.as_("V") != 1 or self.offset.as_("V") != 0:
                 raise ValueError("Raw data cannot be scaled or offset")
-    
+
+            
 __all__ = ["Pulse", "Square", "Sawtooth", "Triangle", "Wave",
            "TTL",
            "Train", "Series",

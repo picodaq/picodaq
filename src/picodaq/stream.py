@@ -32,24 +32,6 @@ class Stream:
         self.isopen = False
         self.isstarted = False
         self.scanspersample = 1 # This is >1 for digital
-
-    @with_doc(PicoDAQ.episodic)
-    def episodic(self, duration: Time,
-                 period: Time | None = None,
-                 count: int | None = None):
-        self.dev.episodic(duration, period, count)
-
-    @with_doc(PicoDAQ.continuous)
-    def continuous(self):
-        self.dev.continuous()
-
-    @with_doc(PicoDAQ.trigger)
-    def trigger(self, source: int, polarity: int):
-        self.dev.trigger(source, polarity)
-
-    @with_doc(PicoDAQ.immediate)
-    def immediate(self):
-        self.dev.immediate()
         
     def __enter__(self):
         """Support `with ... as` syntax
@@ -128,6 +110,33 @@ class Stream:
         self.isstarted = False
         self.dev.stop()
 
+
+    def commit(self):
+        pass
+
+class IStream(Stream):
+    def __init__(self, port: str | None = None,
+                 rate: Frequency = None):
+        super().__init__(port, rate)
+
+    @with_doc(PicoDAQ.episodic)
+    def episodic(self, duration: Time,
+                 period: Time | None = None,
+                 count: int | None = None):
+        self.dev.episodic(duration, period, count)
+
+    @with_doc(PicoDAQ.continuous)
+    def continuous(self):
+        self.dev.continuous()
+
+    @with_doc(PicoDAQ.trigger)
+    def trigger(self, source: int, polarity: int):
+        self.dev.trigger(source, polarity)
+
+    @with_doc(PicoDAQ.immediate)
+    def immediate(self):
+        self.dev.immediate()
+        
     def readchunk(self):
         raise ValueError("Stream does not support reading")
 
@@ -166,11 +175,10 @@ class Stream:
 
         Returns:
             data — A numpy array containing the data, either a vector
-                or a T×C array.
+                or a `T` × `C` array.
             times — A corresponding vector of time stamps, in seconds
                 since start of run; only if the `times` flag is set
                 in the function call.
-
 
         If no `amount` is specified at all, a single chunk is read in
         continuous mode, or a full episode in episodic mode.
@@ -179,12 +187,12 @@ class Stream:
         if not self.isopen:
             raise ValueError("Not open")
         if not self.dev.reader:
-            self.start()
+            self.start() 
+        epichunks = self.dev.params.get('nchunks', 0)
         if isinstance(amount, Quantity):
             amount = int((amount * self.dev.rate).plain())
         elif amount is None:
             amount = self.dev.nscans
-            epichunks = self.dev.params.get('nchunks', 0)
             if epichunks:
                 amount *= epichunks
         data = []
@@ -213,6 +221,4 @@ class Stream:
         else:
             self.offset += len(data) * self.scanspersample
             return data
-
-    def commit(self):
-        pass
+        
