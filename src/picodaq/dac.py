@@ -162,7 +162,7 @@ class AnalogOut(Stream):
 
         """
         y = y.as_(V) * self.dev.ogain + self.dev.ooffset
-        return min(max(int(y+.5), -32767), 32767)
+        return min(max(round(y + .5), -32767), 32767)
         
 
 
@@ -171,15 +171,15 @@ class AnalogOut(Stream):
 
         This uses the device's sampling rate.
         """
-        return int((t * self.dev.rate).plain())
+        return round((t * self.dev.rate).plain())
 
     def _configwave(self, chan, data, amp, pd_relscale, td_relscale):
         bindata = data * amp.as_("V") * self.dev.ogain + self.dev.ooffset
         bindata[bindata < -32767] = -32767
         bindata[bindata > 32767] = 32767
         bindata = bindata.astype(np.int16)
-        pdA1 = int(np.round(pd_relscale * 256))
-        tdA1 = int(np.round(td_relscale * 256))
+        pdA1 = round(pd_relscale * 256)
+        tdA1 = round(td_relscale * 256)
         self.dev.sendwave(chan, bindata)
         self.dev.command(f"pulse A{chan} wave {chan}")
         return pdA1, tdA1
@@ -275,13 +275,14 @@ class AnalogOut(Stream):
         if self.committed:
             return
 
-        sampchans = []
-        for chan in range(4):
+        adata = {}
+        for chan in range(self.dev.info['analog_out_count']):
             if chan in self.stimuli:
                 if isinstance(self.stimuli[chan], Parametrized):
                     self._configstim(chan, self.stimuli[chan])
+                    adata[chan] = None
                 elif isinstance(self.stimuli[chan], Sampled):
-                    sampchans.append(chan)
+                    adata[chan] = self.stimuli[chan]
                 else:
                     raise ValueError("Confusion about stimulus")
             else:
@@ -289,8 +290,7 @@ class AnalogOut(Stream):
         if not self.dev.verify(True):
             raise ValueError("Not verified")
         self.committed = True
-        self.dev.commit(adata={c: self.stimuli[c] for c in sampchans},
-                        maxahead=self.maxahead)
+        self.dev.commit(adata=adata, maxahead=self.maxahead)
 
     @with_doc(Stream.start)
     def start(self):
@@ -430,7 +430,7 @@ class DigitalOut(Stream):
 
     @with_doc(AnalogOut._Ttosamples)
     def _Ttosamples(self, t: Time):
-        return int((t * self.dev.rate).plain())
+        return round((t * self.dev.rate).plain())
 
     def _confignostim(self, line):
         """Define a non-stimulus for given line.
@@ -509,24 +509,25 @@ class DigitalOut(Stream):
             # we cannot have three lines total, so use all four
             firstline = 0
             lastline = 3
-        samplines = []
-        for line in range(4):
+        ddata = {}
+        for line in range(self.dev.info['digital_out_count']):
             if line in self.stimuli:
                 if isinstance(self.stimuli[line], Parametrized):
                     self._configstim(line, self.stimuli[line])
+                    ddata[line] = None
                 elif isinstance(self.stimuli[line], Sampled):
-                    samplines.append(line)
+                    ddata[line] = self.stimuli[line]
                 else:
                     raise ValueError("Confusion about stimulus")
             elif line >= firstline and line <= lastline:
+                ddata[line] = None
                 self._confignostim(line)
             else:
                 self.dev.command(f"off D{line}")
         if not self.dev.verify(True):
             raise ValueError("Not verified")
         self.committed = True
-        self.dev.commit(ddata={c: self.stimuli[c] for c in samplines},
-                        maxahead=self.maxahead)
+        self.dev.commit(ddata=ddata, maxahead=self.maxahead)
 
     @with_doc(Stream.open)
     def open(self):

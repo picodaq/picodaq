@@ -47,7 +47,7 @@ def mockpulse(pulse: Pulse, rate: Frequency,
         idx = (tt_s >= t1_s + t2_s/2) & (tt_s < t1_s + t2_s)
         vv_V[idx] = (t1_s + t2_s - dt_s - tt_s[idx]) / (t2_s/2) * v2_V
     elif isinstance(pulse, Wave):
-        i0 = int(t0_s / dt_s)
+        i0 = round(t0_s / dt_s)
         N = min(len(tt_s) - i0, len(pulse.data))
         if N > 0:
             vv_V[i0:i0+N] = pulse.data[:N] * v1_V
@@ -78,7 +78,8 @@ def mockstim(stim: Parametrized | Pulse | Train | Series,
              episodic: bool = False,
              delay: Time = 0*s,
              repeat: Time | None = None,
-             offset: Voltage = 0*V) -> np.array:
+             offset: Voltage = 0*V,
+             times: bool = False) -> np.array:
     """Represent a parametric stimulus as a vector of samples    
     """
     if isinstance(stim, Pulse) or isinstance(stim, Train) or isinstance(stim, Series):
@@ -86,14 +87,15 @@ def mockstim(stim: Parametrized | Pulse | Train | Series,
     if duration is None:
         duration = stim.series.duration()
     if isinstance(duration, Quantity):
-        duration = int((rate*duration).plain())
+        duration = round((rate*duration).plain())
     isttl = isinstance(stim.series.train.pulse, TTL)
     vv_V = np.zeros(duration,
                     bool if isttl else np.float32)
     if duration == 0:
-        return vv_V
-    if not isttl:
-        vv_V += stim.offset.as_(V)
+        if times:
+            return vv_V, np.zeros(0)
+        else:
+            return vv_V
     v0 = vv_V[0]
     pulse = copy.copy(stim.series.train.pulse)
     train = copy.copy(stim.series.train)
@@ -112,27 +114,34 @@ def mockstim(stim: Parametrized | Pulse | Train | Series,
             period += stim.series.pertrain.trainperiod
             train.apply(stim.series.pertrain)
     if episodic:
-        vv_V = np.concatenate([np.zeros((N,1), dtype=vv_V.dtype), vv_V], 1)
+        #vv_V = np.concatenate([np.zeros((N,1), dtype=vv_V.dtype), vv_V], 1)
         vv_V[0,0] = v0
         for n in range(1, N):
             vv_V[n, 0] = vv_V[n - 1, -1]
     else:
-        vv_V = np.concatenate([np.zeros((1), dtype=vv_V.dtype), vv_V], 0)
+        #vv_V = np.concatenate([np.zeros((1), dtype=vv_V.dtype), vv_V], 0)
         vv_V[0] = v0    
-    if isttl and stim.series.train.pulse.amplitude1:
-        vv_V = np.logical_not(vv_V)
-    return vv_V
+    if isttl:
+        if stim.series.train.pulse.amplitude1:
+            vv_V = np.logical_not(vv_V)
+    else:
+        vv_V += stim.offset.as_(V)
+    if times:
+        return vv_V, np.arange(len(vv_V)) * (1/rate).as_(s)
+    else:
+        return vv_V
 
 
 def mocksampled(stim: ArrayLike | Iterable[ArrayLike],
                 scale: Voltage,
                 rate: Frequency,
-                duration: Time | int) -> np.array:
+                duration: Time | int,
+                times: bool = False) -> np.array:
     """Represent a continuously sampled stimulus as a vector of samples
     """
     
     if isinstance(duration, Time):
-        duration = int((rate*duration).plain())
+        duration = round((rate*duration).plain())
     vv = np.zeros(duration, np.float32)
     N = len(vv)
     if callable(stim):
@@ -147,7 +156,10 @@ def mocksampled(stim: ArrayLike | Iterable[ArrayLike],
     else:
         n = min(len(stim), N)
         vv[:n] = stim[:n]
-    return vv * scale.as_("V")
+    if times:
+        return vv * scale.as_("V"), np.arange(N) * (1/rate).as_(s)
+    else:
+        return vv * scale.as_("V")
 
 
 def mock(src: OutRef, duration: Time | int) -> np.array:
