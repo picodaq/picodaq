@@ -356,12 +356,12 @@ class Train:
         if duration is None:
             if int(pulsecount) != pulsecount:
                 raise ValueError("Pulse count must be integer")
-            self.pulsecount = pulsecount
+            self.pulsecount = int(pulsecount)
         else:
-            self.calculate_pulsecount(duration)
+            self.pulsecount = self.calculate_pulsecount(duration)
 
 
-    def calculate_pulsecount(self, duration):
+    def calculate_pulsecount(self, duration) -> int:
         totdur = 0
         per1 = self.pulseperiod
         dur1 = self.pulse.duration()
@@ -382,6 +382,7 @@ class Train:
             k += 1
             per1 += self.perpulse.pulseperiod
             dur1 += self.perpulse.duration1 + self.perpulse.duration2
+        raise Exception("Cannot get here")
 
     def apply(self, delta: Deltas):
         self.pulse.apply(delta)

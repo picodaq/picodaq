@@ -190,7 +190,7 @@ class IStream(Stream):
             self.start() 
         epichunks = self.dev.params.get('nchunks', 0)
         if isinstance(amount, Quantity):
-            amount = int((amount * self.dev.rate).plain())
+            amount = round((amount * self.dev.rate).plain())
         elif amount is None:
             amount = self.dev.nscans
             if epichunks:

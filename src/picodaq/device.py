@@ -476,7 +476,7 @@ class PicoDAQ:
         
 
     def _postopen(self):        
-        rate_Hz = int(self.rate.as_(Hz))
+        rate_Hz = round(self.rate.as_(Hz))
         self.command(f"rate {rate_Hz}")
         self.command(f"aimask {self.aimask}")
         self.command(f"dimask {self.dimask}")
@@ -503,7 +503,7 @@ class PicoDAQ:
             if self.epi_per is None:
                 self.command("period 0")
             else:
-                self.command(f"period {int(self.epi_per.as_('ms') + 0.5)}")
+                self.command(f"period {round(self.epi_per.as_('ms'))}")
             if self.epi_count is None:
                 self.command(f"nepis 0")
             else:

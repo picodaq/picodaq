@@ -17,6 +17,9 @@ class BinaryWriter:
     def __init__(self, dev: "PicoDAQ", nscans: int,
                  asources: Dict[int, "Sampled"],
                  dsources: Dict[int, "Sampled"]):
+        # The asources and dsources must have None for channels and lines
+        # that are parametrized, so that the outnscans is a proper multiple
+        # of 1/2/4/8/16/32 depending on situation.
         self.dev = dev
         self.nscans = nscans
         self.adata = {}
@@ -29,6 +32,8 @@ class BinaryWriter:
         self.dgen = {}
         self.lines = []
         for c, src in asources.items():
+            if src is None:
+                continue
             if debug:
                 log.debug(f"binwriter asrc {c} {src} {src.data}")
             if callable(src.data):
@@ -43,6 +48,8 @@ class BinaryWriter:
             self.channels.append(c)
         self.channels.sort()
         for c, src in dsources.items():
+            if src is None:
+                continue
             if callable(src.data):
                 self.dgen[c] = src.data() # yields an iterable
                 self.ddata[c] = next(self.dgen[c])
@@ -57,10 +64,10 @@ class BinaryWriter:
         if self.blocksperchunk * 16 < wordsperchunk:
             self.blocksperchunk += 1
 
-        dev.command(f"outnscans {nscans}")
-        chans = " ".join([f"A{c}" for c in asources])
-        chans += " ".join([f"D{c}" for c in dsources])
-        dev.command(f"sampled {chans}")
+        dev.command(f"outnscans {self.nscans}")
+        achans = " ".join([f"A{c}" for c in asources if asources[c]])
+        dchans = " ".join([f"D{c}" for c in dsources if dsources[c]])
+        dev.command(f"sampled {achans} {dchans}")
 
         self.chunkno = 0
         self.finished = False
