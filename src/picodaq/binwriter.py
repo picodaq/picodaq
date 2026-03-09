@@ -200,7 +200,7 @@ class BinaryWriter:
         if pre:
             cmd = f"outdata {self.chunkno} {self.blocksperchunk}"
             self.dev.command(cmd, feedback=False)
-        log.info(f"(outdata) {data.shape} {data[0]} {data[1]} {np.mean(data[2:49]):.3f} {np.std(data[2:49]):.3f} {np.mean(data[50:]):.3f} {np.std(data[50:]):.3f}")
+        #log.info(f"(outdata) {data.shape} {data[0]} {data[1]} {np.mean(data[2:49]):.3f} {np.std(data[2:49]):.3f} {np.mean(data[50:]):.3f} {np.std(data[50:]):.3f}")
         dat = data.tobytes()
         log.info(f"binwriter write {len(dat)}")
         self.dev.ser.write(dat)
