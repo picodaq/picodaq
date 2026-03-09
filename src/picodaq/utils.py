@@ -90,7 +90,7 @@ class NScanCalc:
     def bestforepi(self, scansperepi, penalty=0.02, details=False):
         used = scansperepi
         scansperepi = roundup(scansperepi, self.scansperstep)
-        MAXBLOCKS = 640 # Must match with data.cpp in firmware
+        MAXBLOCKS = 640 # Must match with chunkinfo.cpp in firmware
         maxbytes = MAXBLOCKS * 64
         if self.bytesperstep:
             scansperchunk = self.scansperstep * np.arange(1, maxbytes // self.bytesperstep)
