@@ -277,6 +277,8 @@ class DigitalIn(IStream):
         line0 = None
         if len(lines)==3:
             raise ValueError("Unsupported line combination")
+        if len(lines)==2 and (lines[0] & 1):
+            raise ValueError("Unsupported line combination")
         for line in lines:
             if line!=int(line) or line<0 or line>3:
                 raise ValueError("Unsupported line")
