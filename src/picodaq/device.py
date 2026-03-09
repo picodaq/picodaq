@@ -537,10 +537,9 @@ class PicoDAQ:
         finally:
             self._committing = False
 
-        self._setupsampled(self._adata, self._ddata)
+        self._setupsampled()
             
-    def _setupsampled(self, adata: Dict[int, "Sampled"],
-                      ddata: Dict[int, "Sampled"]) -> None:
+    def _setupsampled(self) -> None:
         """Create a ``BinaryWriter`` and prefill buffer
 
         Calculates optimal number of scans per chunk. This needs
@@ -554,15 +553,16 @@ class PicoDAQ:
         within its ``commit()`` system.
 
         """
-        if not adata and not ddata:
+        if not self._adata and not self._ddata:
             return
-        calc = NScanCalc(makemask(adata.keys()), makemask(ddata.keys()))
+        calc = NScanCalc(makemask(self._adata.keys()),
+                         makemask(self._ddata.keys()))
         if self.epi_dur is None:
             nscans = calc.bestforcont()
         else:
             scansperepi = int(np.ceil((self.epi_dur * self.rate).plain()))
             nscans = calc.bestforepi(scansperepi)
-        self.writer = BinaryWriter(self, nscans, adata, ddata)
+        self.writer = BinaryWriter(self, nscans, self._adata, self._ddata)
         nchunks = self.params["sampled"]
         if self.maxahead:
             nchunks = max(2, min(nchunks, self.maxahead // nscans))
