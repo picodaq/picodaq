@@ -38,7 +38,6 @@ class BinaryWriter:
             if callable(src.data):
                 self.agen[c] = src.data() # yields an iterable
                 self.adata[c] = next(self.agen[c])
-                log.debug(f"binwr {c} {np.mean(self.adata[c]):.3f} {np.std(self.adata[c]):.3f}")
             else:
                 self.adata[c] = src.data
             self.scale[c] = src.scale
