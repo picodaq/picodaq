@@ -11,15 +11,15 @@ import logging
 import selectors
 import time
 
-log = logging.getLogger(__name__)
+log = logging.getLogger()
 
-logging.basicConfig(level=logging.ERROR) #INFO)
+#logging.basicConfig(level=logging.ERROR) #INFO)
 
 t0 = time.time()
 def rtime():
     return f"{time.time()-t0:.3f}"
 
-#log.setLevel(logging.DEBUG)
+#log.setLevel(logging.ERROR)
 
 def usage() -> int:
     print("Usage: pdserver port rate_Hz channels", file=sys.stderr)
@@ -33,11 +33,11 @@ def gen(c, dtype):
         n_[c] = n_.get(c, 0)        
         if stimdata[c]:
             m_ = len(stimdata[c][0])
-            log.debug(f"gen {c} {n_[c]} {m_} {np.mean(stimdata[c][0])} {np.std(stimdata[c][0])} {stimdata[c][0].dtype} {stimdata[c][0].shape}")
+            #log.debug(f"gen {c} {n_[c]} {m_} {np.mean(stimdata[c][0])} {np.std(stimdata[c][0])} {stimdata[c][0].dtype} {stimdata[c][0].shape}")
             n_[c] += 100
             yield stimdata[c].pop(0)
         else:
-            log.debug(f"gen {c} {list(stimdata.keys())} {n_} ---")
+            #log.debug(f"gen {c} {list(stimdata.keys())} {n_} ---")
             n_[c]  += 100
             yield np.zeros(100, dtype)
 
@@ -45,7 +45,7 @@ def gen(c, dtype):
 def sendoutput(stdout, dat: Optional[np.ndarray]):
     if dat is None:
         return
-    log.debug(f"sendoutput {np.mean(dat, 0)} {np.std(dat, 0)}")
+    #log.debug(f"sendoutput {np.mean(dat, 0)} {np.std(dat, 0)}")
     bts = dat.astype(np.float32).tobytes()
     stdout.write(bts)
     stdout.flush()
@@ -54,7 +54,7 @@ def sendoutput(stdout, dat: Optional[np.ndarray]):
 def receiveinput(stdin, nchans, nscans=100):
     nbytes = nchans * nscans * 4
     dat = stdin.read(nbytes)
-    log.debug(f"received {len(dat)} {nbytes}")
+    #log.debug(f"received {len(dat)} {nbytes}")
     if len(dat) == 0:
         return # EOF
     nscans = len(dat) // nchans // 4
@@ -66,9 +66,9 @@ def handleinput(stdin,
                 dolines, doidx):
     dat = receiveinput(stdin, len(aoidx) + len(doidx))
     if dat is None:
-        log.debug("handleinput - nothing received")
+        #log.debug("handleinput - nothing received")
         return
-    log.debug(f"handleinput {dat.shape} {dat.dtype} {dat.mean(axis=0)} {dat.std(axis=0)}")
+    #log.debug(f"handleinput {dat.shape} {dat.dtype} {dat.mean(axis=0)} {dat.std(axis=0)}")
     for idx, c in zip(aoidx, aochans):
         stimdata[f"ao{c}"].append(dat[:,idx].astype(np.float32))
     for idx, c in zip(doidx, dolines):
@@ -94,7 +94,7 @@ def selectandhandle(sel, stdin,
                                    dolines, doidx):
                     return False
                 chn = f"ao{aochans[0]}"
-                log.debug(f"received {rtime()} {len(stimdata[chn])} {stimdata[chn][-1].shape}")
+                #log.debug(f"received {rtime()} {len(stimdata[chn])} {stimdata[chn][-1].shape}")
     return True
 
 
@@ -129,7 +129,7 @@ def run(stdin, stdout,
             do[c].sampled(dgengen(c))
     else:
         do = None
-    log.info("opened")
+    #log.info("opened")
     
     sel = selectors.DefaultSelector()
     sel.register(sys.stdin, selectors.EVENT_READ, "stdin")
@@ -144,11 +144,11 @@ def run(stdin, stdout,
     # state = {c: len(stimdata[c]) for c in stimdata}
     # log.debug(f"got input {state}")
     # 
-    log.debug(f"starting {rtime()}")
+    #log.debug(f"starting {rtime()}")
     # log.debug(f"select {sel.select(0)}")
     
     ai.start()
-    log.debug(f"started {rtime()}")
+    #log.debug(f"started {rtime()}")
     while True:
         if not selectandhandle(sel, stdin,
                                aochans, aoidx,
@@ -168,7 +168,7 @@ def run(stdin, stdout,
     if do:
         do.close()
     ai.close()
-    log.info("closed")
+    #log.info("closed")
 
     return 0
 

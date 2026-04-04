@@ -25,7 +25,7 @@ from typing import Self, Tuple
 import copy
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger()
 
 
 ######################################################################

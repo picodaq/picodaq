@@ -6,16 +6,16 @@ from numpy.typing import ArrayLike
 from typing import Dict, Optional, List, Iterable, Any, Tuple
 import logging
 
-from .units import Hz, kHz, Time
+from .units import Hz, kHz, ms, Time
 from .utils import NScanCalc, makemask, checksum
 from .binreader import BinaryReader
 from .binwriter import BinaryWriter
 from .errors import DeviceError
 
-log = logging.getLogger(__name__)
-debug = False # set true for more debug info
-if debug:
-    log.setLevel(logging.DEBUG)
+
+log = logging.getLogger()
+debug = True # set true for more debug info
+
 t0 = time.time()
 Serial = serial.Serial
 
@@ -113,8 +113,22 @@ def devices() -> Dict[str, str]:
             for port, serno in picos().items()
             if isapicodaq(port)}
 
+
+def picodaqs() -> None:
+    """Print list of picoDAQs connected to the computer"""
+
+    devs = devices()
+    if devs:
+        print("Connected picoDAQs are:")
+        print()
+        for port, serno in devs.items():
+            print(f"    {serno} on {port}")
+    else:
+        print("No picoDAQs found")
+        
+
 def find(serno: str) -> str:
-    """Find a PicoDAQ by serial number
+    """Find a picoDAQ by serial number
 
     Parameters
 
@@ -130,7 +144,7 @@ def find(serno: str) -> str:
     for port, serno1 in picos().items():
         if serno1 == serno:
             return port
-    raise DeviceError(f"No PicoDAQ found with serial number {serno}")
+    raise DeviceError(f"No picoDAQ found with serial number {serno}")
 
 
 def _vrange(vr: str) -> Tuple[float, float]:
@@ -188,7 +202,7 @@ class PicoDAQ:
 
     You typically do not need to use this class directly. The
     ``AnalogIn``, ``DigitalIn``, ``AnalogOut``, and ``DigitalOut``
-    classes can find the PicoDAQ by themselves.
+    classes can find the picoDAQ by themselves.
 
     """
 
@@ -322,6 +336,10 @@ class PicoDAQ:
         See also ``continuous``.
 
         """
+        if duration is None:
+            duration = self._stimtrainduration()
+            if duration is None:
+                raise ValueError("Episode duration must be specified")
         self.epi_dur = duration
         self.epi_per = period
         self.epi_count = count
@@ -555,8 +573,7 @@ class PicoDAQ:
         """
         if not self._adata and not self._ddata:
             return
-        calc = NScanCalc(makemask(self._adata.keys()),
-                         makemask(self._ddata.keys()))
+        calc = NScanCalc(makemask(self._adata), makemask(self._ddata))
         if self.epi_dur is None:
             nscans = calc.bestforcont()
         else:
@@ -696,6 +713,7 @@ class PicoDAQ:
         if self.params["stop"] == "ok":
             return
         if reasons:
+            print(reasons)
             raise DeviceError(f"Stopped with error: {reasons[0]}")
         raise DeviceError("Stopped with unknown error")
     
@@ -810,3 +828,14 @@ class PicoDAQ:
             return False
 
         
+    def _stimtrainduration(self) -> Time | None:
+        dur = None
+        for stream in self.openstreams:
+            if hasattr(stream, 'stimuli'):
+                for stim in stream.stimuli.values():
+                    if hasattr(stim, 'series'):
+                        dur1 = stim.series.train.duration() + 50*ms
+                        if dur is None or dur1 > dur:
+                            dur = dur1
+        return dur
+    

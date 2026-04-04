@@ -1,12 +1,14 @@
 import numpy as np
-from typing import Iterable
+from typing import Iterable, Dict
 import warnings
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger()
 
 
-def makemask(channels: Iterable[int]) -> int:
+def makemask(channels: Iterable[int] | Dict) -> int:
+    if isinstance(channels, dict):
+        channels = [k for k, v in channels.items() if v is not None]
     mask = 0
     for c in channels:
         mask |= (1<<c)

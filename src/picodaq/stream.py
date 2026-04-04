@@ -2,14 +2,14 @@ from __future__ import annotations
 import numpy as np
 import logging
 
-from .device import PicoDAQ
+from .device import PicoDAQ, find
 from .units import Hz, kHz, Time, Frequency, Quantity
 from .decorators import with_doc
 
 MINRATE = 100 * Hz
 MAXRATE = 330 * kHz
 
-log = logging.getLogger(__name__)
+log = logging.getLogger()
 
 class Stream:
     """Parent class for ``AnalogIn`` and friends
@@ -17,7 +17,10 @@ class Stream:
     This is a low-level class not intended for typical users.
     """
     def __init__(self, port: str | None = None,
-                 rate: Frequency = None):
+                 rate: Frequency = None,
+                 serno: str | None = None):
+        if serno is not None:
+            port = find(serno)
         self.dev = PicoDAQ.finddevice(port)
         if rate is None:
             if self.dev.rate is None:
@@ -45,7 +48,7 @@ class Stream:
     def open(self) -> None:
         """Open the stream
 
-        This automatically opens the underlying PicoDAQ device. If
+        This automatically opens the underlying picoDAQ device. If
         more than one stream is associated with a single device, each
         stream must be individually opened and the device remains
         open as long as any streams are open.
@@ -110,17 +113,8 @@ class Stream:
         self.isstarted = False
         self.dev.stop()
 
-
-    def commit(self):
-        pass
-
-class IStream(Stream):
-    def __init__(self, port: str | None = None,
-                 rate: Frequency = None):
-        super().__init__(port, rate)
-
     @with_doc(PicoDAQ.episodic)
-    def episodic(self, duration: Time,
+    def episodic(self, duration: Time | None = None,
                  period: Time | None = None,
                  count: int | None = None):
         self.dev.episodic(duration, period, count)
@@ -137,6 +131,15 @@ class IStream(Stream):
     def immediate(self):
         self.dev.immediate()
         
+    def commit(self):
+        pass
+
+class IStream(Stream):
+    def __init__(self, port: str | None = None,
+                 rate: Frequency = None,
+                 serno: str | None = None):
+        super().__init__(port, rate, serno=serno)
+
     def readchunk(self):
         raise ValueError("Stream does not support reading")
 

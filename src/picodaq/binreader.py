@@ -14,11 +14,8 @@ FLAGS_INBUF_CONTINUE = np.uint8(0x10)
 FLAGS_INBUF_NEARFULL = np.uint8(0x20)
 FLAGS_INBUF_FULL = np.uint8(0x30)
 
-log = logging.getLogger(__name__)
+log = logging.getLogger()
 debug = False
-
-#log.setLevel(logging.DEBUG)
-
 
 
 class BinaryReader:

@@ -12,7 +12,7 @@ from .decorators import with_doc
 from .utils import makemask, NScanCalc
 from .binreader import FLAGS_STIMACTIVE
 
-log = logging.getLogger(__name__)
+log = logging.getLogger()
 debug = False
 if debug:
     log.setLevel(logging.DEBUG)
@@ -114,8 +114,9 @@ class AnalogOut(Stream):
     def __init__(self,
                  rate: Frequency | None = None,
                  port: str | None = None,
-                 maxahead: int | Time | None = None):
-        super().__init__(port, rate)
+                 maxahead: int | Time | None = None,
+                 serno: str | None = None):
+        super().__init__(port, rate, serno=serno)
         self.stimuli = {} # dict of channel to Parametrized or Sampled
         if isinstance(maxahead, Quantity):
             maxahead = int((self.dev.rate * maxahead).plain())
@@ -385,8 +386,9 @@ class DigitalOut(Stream):
     def __init__(self,
                  rate: Frequency | None = None,
                  port: str | None = None,
-                 maxahead: int | Time | None = None):
-        super().__init__(port, rate)
+                 maxahead: int | Time | None = None,
+                 serno: str | None = None):
+        super().__init__(port, rate, serno=serno)
         self.stimuli = {}
         if isinstance(maxahead, Quantity):
             maxahead = (self.dev.rate * maxahead).plain()
@@ -556,4 +558,8 @@ class DigitalOut(Stream):
         self.stop()
         if not wasopen:
             self.close()
+        
+    @with_doc(AnalogOut.poll)
+    def poll(self) -> bool:
+        return _poll(self.dev)
         

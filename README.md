@@ -11,8 +11,8 @@ this can be as easy as
         data = ai.read(10*s)
 
 At present, the picodaq library supports our soon-to-be-released
-picoDAQ hardware. Support for other popular hardware (including National
-Instruments and Measurement Computing) is planned as well.
+picoDAQ hardware. Support for other popular hardware may be added in
+the future.
 
 ## Features
 

@@ -11,7 +11,7 @@ from . import dac
 
 debug = False
 
-log = logging.getLogger(__name__)
+log = logging.getLogger()
 
 
 class AnalogIn(IStream):
@@ -22,7 +22,8 @@ class AnalogIn(IStream):
         channel: A single channel to record from
         channels: A list of channels to record from
         rate: Sampling frequency for the recording
-        port: Device to connect to
+        port: Device to connect to identified by COM port
+        serno: Device to connect to identified by serial number
 
     You must specify either a single `channel` or a list of `channels`
     to record from, but not both. Any combination of analog inputs 0,
@@ -53,8 +54,9 @@ class AnalogIn(IStream):
     def __init__(self, channel: int | None = None,
                  channels: ArrayLike | None = None,
                  rate: Frequency = None,
-                 port: str | None = None):
-        super().__init__(port, rate)
+                 port: str | None = None,
+                 serno: str | None = None):
+        super().__init__(port, rate, serno=serno)
 
         if channel is None:
             if channels is None:
@@ -260,8 +262,9 @@ class DigitalIn(IStream):
     def __init__(self, line: int | None = None,
                  lines: ArrayLike | None = None,
                  rate: Frequency | None = None,
-                 port: str | None = None):
-        super().__init__(port, rate)
+                 port: str | None = None,
+                 serno: str | None = None):
+        super().__init__(port, rate, serno=serno)
  
         if line is None:
             if lines is None:

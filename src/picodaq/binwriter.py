@@ -8,10 +8,9 @@ from .utils import checksum
 FLAGS_BINARY = np.uint8(0x80)
 FLAGS_LAST = np.uint8(0x04)
 
-log = logging.getLogger(__name__)
+log = logging.getLogger()
 debug = False
-if debug:
-    log.setLevel(logging.DEBUG)
+
 
 class BinaryWriter:
     def __init__(self, dev: "PicoDAQ", nscans: int,
@@ -39,7 +38,7 @@ class BinaryWriter:
             if callable(src.data):
                 self.agen[c] = src.data() # yields an iterable
                 self.adata[c] = next(self.agen[c])
-                log.info(f"binwr {c} {np.mean(self.adata[c]):.3f} {np.std(self.adata[c]):.3f}")
+                log.debug(f"binwr {c} {np.mean(self.adata[c]):.3f} {np.std(self.adata[c]):.3f}")
             else:
                 self.adata[c] = src.data
             self.scale[c] = src.scale
@@ -93,7 +92,10 @@ class BinaryWriter:
     def _filladata(self, data: np.ndarray) -> Tuple[int, int]:
         def _toraw(c, yy):
             if debug:
-                log.debug(f"filla {yy.shape} {yy.dtype} {np.std(yy)}")
+                if len(yy):
+                    log.debug(f"filla {yy.shape} {yy.dtype} {np.std(yy)}")
+                else:
+                    log.debug(f"filla {yy.shape} {yy.dtype}")
             if self.raw[c]:
                 return yy
             y1 = (yy * self.scale[c].as_('V')
@@ -125,7 +127,8 @@ class BinaryWriter:
                     elif c in self.agen:
                         try:
                             self.adata[c] = next(self.agen[c])
-                            log.debug(f"next {c} {np.mean(self.adata[c]):.3f} {np.std(self.adata[c]):.3f} {self.adata[c].shape}")
+                            if debug:
+                                log.debug(f"next {c} {np.mean(self.adata[c]):.3f} {np.std(self.adata[c]):.3f} {self.adata[c].shape}")
                         except StopIteration:
                             self.adata[c] = None
                     else:
@@ -200,11 +203,14 @@ class BinaryWriter:
         if pre:
             cmd = f"outdata {self.chunkno} {self.blocksperchunk}"
             self.dev.command(cmd, feedback=False)
-        #log.info(f"(outdata) {data.shape} {data[0]} {data[1]} {np.mean(data[2:49]):.3f} {np.std(data[2:49]):.3f} {np.mean(data[50:]):.3f} {np.std(data[50:]):.3f}")
+        if debug and len(data) > 50:
+            log.debug(f"(outdata) {data.shape} {data[0]} {data[1]} {np.mean(data[2:49]):.3f} {np.std(data[2:49]):.3f} {np.mean(data[50:]):.3f} {np.std(data[50:]):.3f}")
         dat = data.tobytes()
-        log.info(f"binwriter write {len(dat)}")
+        if debug:
+            log.debug(f"binwriter write {len(dat)}")
         self.dev.ser.write(dat)
-        log.info("binwriter wrote")
+        if debug:
+            log.debug("binwriter wrote")
         if pre:
             self.dev._getfeedback("outdata")
             chk = checksum(data)

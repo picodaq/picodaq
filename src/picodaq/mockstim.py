@@ -9,7 +9,7 @@ from .stimulus import Pulse, Train, Series, Parametrized, Sampled
 from .stimulus import TTL, Square, Sawtooth, Triangle, Wave
 from .dac import OutRef
 
-log = logging.getLogger(__name__)
+log = logging.getLogger()
 
 
 def mockpulse(pulse: Pulse, rate: Frequency,
@@ -141,7 +141,9 @@ def mocksampled(stim: ArrayLike | Iterable[ArrayLike],
     """
     
     if isinstance(duration, Time):
-        duration = round((rate*duration).plain())
+        duration = int(round((rate*duration).plain()))
+    elif isinstance(duration, Quantity):
+        duration = int(round((rate*duration).plain()))
     vv = np.zeros(duration, np.float32)
     N = len(vv)
     if callable(stim):
@@ -153,6 +155,10 @@ def mocksampled(stim: ArrayLike | Iterable[ArrayLike],
                 break
             vv[i0:i0+n] = dat[:n]
             i0 += n
+    elif isinstance(stim, Sampled):
+        n = min(len(stim.data), N)
+        vv[:n] = stim.data[:n] * stim.scale.as_("V") + stim.offset.as_("V")
+        scale = 1*V
     else:
         n = min(len(stim), N)
         vv[:n] = stim[:n]
@@ -169,4 +175,4 @@ def mock(src: OutRef, duration: Time | int) -> np.array:
     if isinstance(stim, Parametrized):
         return mockstim(stim, rate, duration, episodic)
     elif isinstance(stim, Sampled):
-        return mocksampled(stim, rate, duration)
+        return mocksampled(stim, 1*V, rate, duration)
