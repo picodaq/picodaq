@@ -8,8 +8,10 @@ from picodaq import AnalogIn, AnalogOut, DigitalOut, Frequency, Hz, ms
 from typing import List, Optional
 import numpy as np
 import logging
-import selectors
+import queue
+import threading
 import time
+
 
 log = logging.getLogger()
 
@@ -51,50 +53,55 @@ def sendoutput(stdout, dat: Optional[np.ndarray]):
     stdout.flush()
 
 
-def receiveinput(stdin, nchans, nscans=100):
+def receiveinput_worker(source_fd, dest_queue, nchans, nscans):
     nbytes = nchans * nscans * 4
-    dat = stdin.read(nbytes)
-    #log.debug(f"received {len(dat)} {nbytes}")
-    if len(dat) == 0:
-        return # EOF
-    nscans = len(dat) // nchans // 4
-    return np.frombuffer(dat, np.float32).reshape(nscans, nchans)
+    while True:
+        dat = source_fd.read(nbytes)
+        if len(dat) == 0:
+            dest_queue.put(None)
+            return # EOF
+        nscans = len(dat) // nchans // 4
+        dest_queue.put(np.frombuffer(dat, np.float32).reshape(nscans, nchans))
+
+class StdInThread:
+    def __init__(self, stdin, aochans, aoidx, dolines, doidx):
+        self.stdin = stdin
+        self.aochans = aochans
+        self.aoidx = aoidx
+        self.dolines = dolines
+        self.doidx = doidx
+        self.queue = queue.Queue()
+        self.thread = None
+
+    def start(self):
+        self.thread = threading.Thread(target=receiveinput_worker,
+                         args=(self.stdin,
+                               self.queue,
+                               len(self.aoidx) + len(self.doidx),
+                               100))
+        self.thread.start()
+
+    def join(self):
+        if self.thread is not None:
+            self.thread.join()
+                     
+    def read(self):
+        try:
+            return self.queue.get_nowait()
+        except queue.Empty:
+            return []
 
 
-def handleinput(stdin,
-                aochans, aoidx,
-                dolines, doidx):
-    dat = receiveinput(stdin, len(aoidx) + len(doidx))
+def handleinput(thread):
+    dat = thread.read()
     if dat is None:
-        #log.debug("handleinput - nothing received")
-        return
-    #log.debug(f"handleinput {dat.shape} {dat.dtype} {dat.mean(axis=0)} {dat.std(axis=0)}")
-    for idx, c in zip(aoidx, aochans):
+        return # EOF
+    if len(dat) == 0:
+        return False
+    for idx, c in zip(thread.aoidx, thread.aochans):
         stimdata[f"ao{c}"].append(dat[:,idx].astype(np.float32))
-    for idx, c in zip(doidx, dolines):
+    for idx, c in zip(thread.doidx, thread.dolines):
         stimdata[f"do{c}"].append(dat[:,idx].astype(np.uint8))
-    return True
-
-_ai = [None]
-
-def selectandhandle(sel, stdin,
-                    aochans, aoidx,
-                    dolines, doidx,
-                    timeout=0):
-    selectmore = True
-    #log.debug(f"selectandhandle {rtime()}")
-    while selectmore:
-        selectmore = False
-        for key, mask in sel.select(timeout):
-            if key.data=="stdin":
-                #log.debug(f"receiving {rtime()} {_ai[0].dev.reader.lastchunkno}")
-                selectmore = True
-                if not handleinput(stdin,
-                                   aochans, aoidx,
-                                   dolines, doidx):
-                    return False
-                chn = f"ao{aochans[0]}"
-                #log.debug(f"received {rtime()} {len(stimdata[chn])} {stimdata[chn][-1].shape}")
     return True
 
 
@@ -107,7 +114,6 @@ def run(stdin, stdout,
         doidx: List[int]):
 
     ai = AnalogIn(port=port, rate=rate, channels=aichans)
-    _ai[0] = ai
     ai.open()
     if aochans:
         ao = AnalogOut(port=port, rate=rate, maxahead=300*ms)
@@ -129,33 +135,15 @@ def run(stdin, stdout,
             do[c].sampled(dgengen(c))
     else:
         do = None
-    #log.info("opened")
-    
-    sel = selectors.DefaultSelector()
-    sel.register(sys.stdin, selectors.EVENT_READ, "stdin")
-
-    # if not selectandhandle(sel, stdin,
-    #                        aochans, aoidx,
-    #                        dolines, doidx,
-    #                        .2):
-    #     print("eof before anything", file=sys.stderr)        
-    #     return 0
-    # 
-    # state = {c: len(stimdata[c]) for c in stimdata}
-    # log.debug(f"got input {state}")
-    # 
-    #log.debug(f"starting {rtime()}")
-    # log.debug(f"select {sel.select(0)}")
     
     ai.start()
-    #log.debug(f"started {rtime()}")
+    thread = StdInThread(stdin, aochans, aoidx, dolines, doidx)
+    thread.start()
     while True:
-        if not selectandhandle(sel, stdin,
-                               aochans, aoidx,
-                               dolines, doidx):
+        if handleinput(thread) is None:
             break # input closed
         dat = ai.read()
-        if not len(dat):
+        if len(dat) == 0:
             break # Run stopped
         sendoutput(stdout, dat)
         if ao:
@@ -168,8 +156,6 @@ def run(stdin, stdout,
     if do:
         do.close()
     ai.close()
-    #log.info("closed")
-
     return 0
 
 
