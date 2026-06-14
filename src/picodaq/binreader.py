@@ -202,9 +202,15 @@ class BinaryReader:
         digistart = follstart + N*self.nfollower
         adata = np.zeros((N, self.nchannels), np.int16)
         for k, d in enumerate(self.destleader):
-            adata[:,d] = raw[leadstart+k:follstart:self.nleader]
+            if self.nleader == 1:
+                adata[:,d] = raw[leadstart+k:follstart].reshape(-1,2)[:,-1::-1].reshape(-1)
+            else:
+                adata[:,d] = raw[leadstart+k:follstart:self.nleader]
         for k, d in enumerate(self.destfollower):
-            adata[:,d] = raw[follstart+k:digistart:self.nfollower]
+            if self.destfollower == 1:
+                adata[:,d] = raw[follstart+k:digistart].reshape(-1,2)[:,-1::-1].reshape(-1)
+            else:
+                adata[:,d] = raw[follstart+k:digistart:self.nfollower]
         self.storeadata(adata)
         if self.nlines:
             ddata = np.frombuffer(raw[digistart:].tobytes(), np.uint8)
